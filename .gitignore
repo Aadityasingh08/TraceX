@@ -38,3 +38,7 @@ Thumbs.db
 # Temporary generated files
 tracex_doc_temp.html
 test_pdf.py
+clean_push.py
+execute_push.py
+test_push.py
+upload_gui.py
