@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: tracex-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tracex
+      POSTGRES_USER: tracex
+      POSTGRES_PASSWORD: tracex_local_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - tracex_postgres_data:/var/lib/postgresql/data
+      - ./Backend/src/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tracex -d tracex"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  tracex_postgres_data:
