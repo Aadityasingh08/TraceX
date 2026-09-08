@@ -1232,21 +1232,21 @@ function openNewInvestigationModal() {
           </div>
         </div>
 
-        <!-- DIRECT BULK FILE INGESTION CHAMBER -->
+        <!-- DIRECT BULK FILE & PDF DOSSIER INGESTION CHAMBER -->
         <div class="raw-data-section" style="margin-top:14px;">
           <div class="raw-data-header">
             <div class="raw-data-title">
               ${icon("upload-cloud")}
-              <span>DIRECT BULK FILE INGESTION (.JSON, .CSV, .NDJSON, .TXT, .LOG)</span>
+              <span>DIRECT BULK &amp; PDF CASE DOSSIER INGESTION (.PDF, .JSON, .CSV, .TXT)</span>
             </div>
             <span style="font-size:10px;color:var(--cyan);font-family:var(--mono);">UP TO 100MB / HIGH-THROUGHPUT</span>
           </div>
 
           <div class="file-dropzone" id="invFileDropzone">
-            <input type="file" id="invFileInput" style="display:none;" accept=".json,.csv,.ndjson,.txt,.log" />
+            <input type="file" id="invFileInput" style="display:none;" accept=".pdf,.json,.csv,.ndjson,.txt,.log" />
             <div class="dropzone-icon">${icon("file-up")}</div>
-            <div class="dropzone-title">Click to browse or Drag & Drop Intelligence Dataset</div>
-            <div class="dropzone-subtitle">Directly load 100,000+ JSON records, CSV dumps, or IOC threat feeds</div>
+            <div class="dropzone-title">Click to browse or Drag &amp; Drop Case PDF Dossier / Dataset</div>
+            <div class="dropzone-subtitle">Directly load PDF FIRs, forensic police dossiers, 100,000+ JSON records, or CSV threat dumps</div>
           </div>
 
           <div id="invFileInfo" class="file-info-box" style="display:none;">
@@ -1308,32 +1308,39 @@ function openNewInvestigationModal() {
         : `${(file.size / 1024).toFixed(1)} KB`;
       if (fileSizeEl) fileSizeEl.textContent = sizeStr;
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target.result;
-        let countEstimate = "File Loaded";
-        try {
-          if (file.name.endsWith(".json") || text.trim().startsWith("[")) {
-            const parsed = JSON.parse(text);
-            const count = Array.isArray(parsed) ? parsed.length : (parsed.records?.length || 1);
-            countEstimate = `${count.toLocaleString()} Records Detected`;
-          } else if (file.name.endsWith(".csv")) {
-            const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-            countEstimate = `${Math.max(1, lines.length - 1).toLocaleString()} Rows Detected`;
-          } else {
-            const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-            countEstimate = `${lines.length.toLocaleString()} Lines Detected`;
-          }
-        } catch (_) {
-          countEstimate = "Binary / Encrypted Stream";
-        }
-        if (fileCountEl) fileCountEl.textContent = countEstimate;
-
+      if (file.name.toLowerCase().endsWith(".pdf")) {
+        if (fileCountEl) fileCountEl.textContent = "PDF Case Dossier (Ready for AI Extraction)";
         if (rawTextarea && !rawTextarea.value.trim()) {
-          rawTextarea.value = text.slice(0, 3000) + (text.length > 3000 ? "\n\n[... Remaining dataset will be batch ingested directly on submit ...]" : "");
+          rawTextarea.value = `[PDF Case Dossier Attached: ${file.name} - Size: ${sizeStr}]\nForensic IOC parser will automatically extract Phone Numbers, Telegram Handles, Crypto Wallets, Emails, and Target Names directly into the case workspace.`;
         }
-      };
-      reader.readAsText(file.slice(0, 5 * 1024 * 1024));
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const text = e.target.result;
+          let countEstimate = "File Loaded";
+          try {
+            if (file.name.endsWith(".json") || text.trim().startsWith("[")) {
+              const parsed = JSON.parse(text);
+              const count = Array.isArray(parsed) ? parsed.length : (parsed.records?.length || 1);
+              countEstimate = `${count.toLocaleString()} Records Detected`;
+            } else if (file.name.endsWith(".csv")) {
+              const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+              countEstimate = `${Math.max(1, lines.length - 1).toLocaleString()} Rows Detected`;
+            } else {
+              const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+              countEstimate = `${lines.length.toLocaleString()} Lines Detected`;
+            }
+          } catch (_) {
+            countEstimate = "Binary / Encrypted Stream";
+          }
+          if (fileCountEl) fileCountEl.textContent = countEstimate;
+
+          if (rawTextarea && !rawTextarea.value.trim()) {
+            rawTextarea.value = text.slice(0, 3000) + (text.length > 3000 ? "\n\n[... Remaining dataset will be batch ingested directly on submit ...]" : "");
+          }
+        };
+        reader.readAsText(file.slice(0, 5 * 1024 * 1024));
+      }
       refreshIcons();
     };
 
@@ -1533,14 +1540,22 @@ async function submitNewInvestigation(form) {
       if (progressContainer) progressContainer.style.display = "block";
       if (progressBar) progressBar.style.width = "40%";
       if (progressPercent) progressPercent.textContent = "40%";
-      if (progressStatus) progressStatus.textContent = `Uploading ${uploadedFile.name} to PostgreSQL cluster...`;
+      if (progressStatus) {
+        progressStatus.textContent = uploadedFile.name.toLowerCase().endsWith(".pdf")
+          ? `Extracting forensic IOCs & Ingesting PDF Dossier ${uploadedFile.name}...`
+          : `Uploading ${uploadedFile.name} to PostgreSQL cluster...`;
+      }
 
       try {
         const uploadRes = await api.uploadIntelligenceFile(uploadedFile, createdInv.id);
         bulkFileCount = uploadRes.count || 1;
         if (progressBar) progressBar.style.width = "100%";
         if (progressPercent) progressPercent.textContent = "100%";
-        if (progressStatus) progressStatus.textContent = `Completed: ${bulkFileCount.toLocaleString()} records ingested!`;
+        if (progressStatus) {
+          progressStatus.textContent = uploadedFile.name.toLowerCase().endsWith(".pdf")
+            ? `Completed: Extracted & indexed ${bulkFileCount.toLocaleString()} signals from PDF case dossier!`
+            : `Completed: ${bulkFileCount.toLocaleString()} records ingested!`;
+        }
       } catch (uploadErr) {
         console.warn("Backend bulk file upload fallback:", uploadErr.message);
         bulkFileCount = 50;
