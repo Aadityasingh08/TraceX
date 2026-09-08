@@ -2,6 +2,8 @@
   "name": "tracex",
   "version": "1.0.0",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build"
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd Backend && npm install && npm start",
+    "server": "cd Backend && npm start"
   }
 }
