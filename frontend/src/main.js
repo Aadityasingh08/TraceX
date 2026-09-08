@@ -159,10 +159,11 @@ function renderLogin() {
       <div class="brand-lockup login-brand"><div class="brand-mark">${icon("orbit")}</div><div><strong>TRACE<span>-X</span></strong><small>INTELLIGENCE WORKSPACE</small></div></div>
       <div class="login-intro"><span class="eyebrow">SECURE ACCESS GATEWAY</span><h1>From fragmented signals<br><em>to actionable intelligence.</em></h1><p>Investigate relationships, patterns and evidence in one analyst-controlled workspace.</p></div>
       <form class="login-form" data-login-form>
-        <label>Email<input name="username" type="email" placeholder="you@agency.gov" value="analyst@tracex.local" autocomplete="username" required /></label>
-        <label>Password<div class="password-field"><input name="password" type="password" placeholder="••••••••" value="analyst123" autocomplete="current-password" required /><button type="button" class="icon-button" aria-label="Show password" data-action="toggle-password">${icon("eye")}</button></div></label>
-        <button class="button button-primary button-wide" type="submit">${icon("log-in")} SIGN IN</button>
-        <button class="button button-secondary button-wide" type="button" data-action="quick-demo-login" style="margin-top:6px;border-color:rgba(93,217,219,0.3);color:var(--cyan);">${icon("sparkles")} QUICK DEMO ACCESS (A. Patel · Analyst)</button>
+        <label>Email<input id="loginEmail" name="username" type="email" placeholder="you@agency.gov" value="analyst@tracex.local" autocomplete="username" required /></label>
+        <label>Password<div class="password-field"><input id="loginPassword" name="password" type="password" placeholder="••••••••" value="analyst123" autocomplete="current-password" required /><button type="button" class="icon-button" aria-label="Show password" data-action="toggle-password">${icon("eye")}</button></div></label>
+        <button id="loginSubmitBtn" class="button button-primary button-wide" type="submit">${icon("log-in")} SIGN IN</button>
+        <button id="quickDemoBtn" class="button button-secondary button-wide" type="button" data-action="quick-demo-login" style="margin-top:6px;border-color:rgba(93,217,219,0.3);color:var(--cyan);">${icon("sparkles")} QUICK DEMO ACCESS (A. Patel · Analyst)</button>
+        <div id="loginSecurityAlert" class="login-security-alert" style="display:none;"></div>
       </form>
       <p class="auth-switch">Don't have an account? <a href="#signup" data-route="signup">Create one</a></p>
       <div class="login-footer"><span>${icon("shield-check")} AUTHORIZED INTELLIGENCE ANALYSIS ENVIRONMENT</span><span>TRACE-X v0.9.4</span></div>
@@ -1791,10 +1792,78 @@ document.addEventListener("submit", async (event) => {
 
   event.preventDefault();
   const formData = new FormData(event.target);
-  const email = formData.get("username");
-  const password = formData.get("password");
+  const email = (formData.get("username") || "").toString().trim();
+  const password = (formData.get("password") || "").toString();
+
+  const alertEl = document.getElementById("loginSecurityAlert");
+  const emailInput = document.getElementById("loginEmail");
+  const passwordInput = document.getElementById("loginPassword");
+  const submitBtn = document.getElementById("loginSubmitBtn");
+  const demoBtn = document.getElementById("quickDemoBtn");
+
+  const formatTimer = (sec) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
+
+  const triggerLockout = (remainingSec) => {
+    if (window._traceLockoutInterval) clearInterval(window._traceLockoutInterval);
+    let sec = remainingSec || 300;
+
+    if (emailInput) emailInput.disabled = true;
+    if (passwordInput) passwordInput.disabled = true;
+    if (submitBtn) submitBtn.disabled = true;
+    if (demoBtn) demoBtn.disabled = true;
+
+    if (alertEl) {
+      alertEl.style.display = "flex";
+      alertEl.className = "login-security-alert alert-danger";
+      alertEl.innerHTML = `
+        <div class="login-security-header">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span>PRIVACY & SECURITY LOCKOUT (3 FAILED ATTEMPTS)</span>
+        </div>
+        <div>Account temporarily blocked due to 3 consecutive failed password attempts. Access is halted to protect intelligence records against unauthorized brute-force attempts.</div>
+        <div class="lockout-countdown-box">
+          <span>COOLDOWN REMAINING:</span>
+          <span class="lockout-timer" id="lockoutTimerDisplay">${formatTimer(sec)}</span>
+        </div>
+      `;
+    }
+
+    window._traceLockoutInterval = setInterval(() => {
+      sec -= 1;
+      if (sec <= 0) {
+        clearInterval(window._traceLockoutInterval);
+        window._traceLockoutInterval = null;
+        if (emailInput) emailInput.disabled = false;
+        if (passwordInput) passwordInput.disabled = false;
+        if (submitBtn) submitBtn.disabled = false;
+        if (demoBtn) demoBtn.disabled = false;
+        if (alertEl) {
+          alertEl.className = "login-security-alert alert-success";
+          alertEl.innerHTML = `
+            <div class="login-security-header">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <span>LOCKOUT EXPIRED</span>
+            </div>
+            <div>Security cooldown complete. You may now enter valid analyst credentials.</div>
+          `;
+        }
+      } else {
+        const display = document.getElementById("lockoutTimerDisplay");
+        if (display) display.textContent = formatTimer(sec);
+      }
+    }, 1000);
+  };
+
   try {
     const { token, user } = await api.login(email, password);
+    if (window._traceLockoutInterval) {
+      clearInterval(window._traceLockoutInterval);
+      window._traceLockoutInterval = null;
+    }
     localStorage.setItem("tracex_token", token);
     localStorage.setItem("tracex_user", JSON.stringify(user));
     setState({
@@ -1806,21 +1875,41 @@ document.addEventListener("submit", async (event) => {
     loadData();
     pushToast(`Signed in as ${user.name}`, "success");
   } catch (err) {
-    if (email === "analyst@tracex.local" || email.includes("@")) {
-      const demoUser = { id: "DEMO-01", name: "A. Patel", email, role: "INVESTIGATOR" };
-      localStorage.setItem("tracex_token", "demo-session-token");
-      localStorage.setItem("tracex_user", JSON.stringify(demoUser));
-      setState({
-        user: { name: demoUser.name, role: demoUser.role, initials: "AP" },
-        demoMode: true,
-      });
-      dataLoaded = false;
-      navigate("dashboard");
-      loadData();
-      pushToast(`Signed in as ${demoUser.name} (Demonstration Session)`, "success");
-      return;
+    console.warn("Login rejection:", err);
+    const errData = err.data || {};
+
+    if (err.status === 429 || errData.locked) {
+      triggerLockout(errData.remainingSeconds || 300);
+      pushToast("Security Lockout: 3 failed attempts reached. Account blocked for 5 minutes.", "error");
+    } else if (err.status === 401) {
+      const attemptsLeft = errData.attemptsLeft;
+      if (alertEl) {
+        alertEl.style.display = "flex";
+        alertEl.className = "login-security-alert alert-warning";
+        alertEl.innerHTML = `
+          <div class="login-security-header">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <span>AUTHENTICATION FAILED</span>
+          </div>
+          <div>${escapeHtml(errData.message || "Invalid email or password.")}</div>
+          ${attemptsLeft !== undefined ? `<div style="font-weight:600;margin-top:2px;">⚠️ <strong>${attemptsLeft}</strong> attempt(s) remaining before automatic 5-minute security lockout.</div>` : ""}
+        `;
+      }
+      pushToast(errData.message || "Invalid credentials", "error");
+    } else {
+      if (alertEl) {
+        alertEl.style.display = "flex";
+        alertEl.className = "login-security-alert alert-danger";
+        alertEl.innerHTML = `
+          <div class="login-security-header">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>CONNECTION ERROR</span>
+          </div>
+          <div>${escapeHtml(err.message || "Unable to reach TRACE-X authentication service.")}</div>
+        `;
+      }
+      pushToast(err.message || "Login failed", "error");
     }
-    pushToast("Invalid email or password", "error");
   }
 });
 document.addEventListener("submit", async (event) => {

@@ -61,6 +61,14 @@ textarea { min-height: 100px; resize: vertical; }
 .password-field { position: relative; }
 .password-field input { padding-right: 42px; }
 .password-field .icon-button { position: absolute; top: 3px; right: 3px; }
+.login-security-alert { margin-top: 10px; padding: 12px 14px; border-radius: 8px; font-size: 12px; line-height: 1.5; border: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; animation: fadeIn .2s ease; }
+.login-security-alert.alert-danger { background: rgba(236, 116, 110, 0.12); border-color: rgba(236, 116, 110, 0.4); color: #fca5a5; }
+.login-security-alert.alert-warning { background: rgba(235, 174, 86, 0.12); border-color: rgba(235, 174, 86, 0.4); color: #fde68a; }
+.login-security-alert.alert-success { background: rgba(87, 217, 163, 0.12); border-color: rgba(87, 217, 163, 0.4); color: #86efac; }
+.login-security-header { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; letter-spacing: 0.02em; }
+.login-security-header svg { width: 16px; height: 16px; flex-shrink: 0; }
+.lockout-countdown-box { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: rgba(0, 0, 0, 0.35); border-radius: 6px; margin-top: 4px; border: 1px solid rgba(236, 116, 110, 0.25); font-family: var(--mono); }
+.lockout-timer { font-size: 16px; font-weight: 700; color: #ff8b8b; letter-spacing: 0.1em; }
 .login-footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 30px; color: var(--muted); font: 9px var(--mono); letter-spacing: .08em; }
 .login-footer span { display: flex; gap: 7px; align-items: center; }
 .login-footer svg { width: 13px; height: 13px; color: var(--cyan); }

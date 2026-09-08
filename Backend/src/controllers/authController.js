@@ -37,6 +37,11 @@ export const register = async (req, res) => {
   }
 };
 
+// In-memory failed login tracking with lockout timer
+const loginAttemptsMap = new Map(); // email -> { count, lockedUntil }
+const MAX_FAILED_ATTEMPTS = 3;
+const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -45,17 +50,64 @@ export const login = async (req, res) => {
       return res.status(400).json({ success: false, message: "Email and password required" });
     }
 
-    const result = await pool.query(`SELECT * FROM users WHERE email = $1`, [email]);
+    const normalizedEmail = email.toLowerCase().trim();
+    const now = Date.now();
+    const attemptRecord = loginAttemptsMap.get(normalizedEmail) || { count: 0, lockedUntil: null };
+
+    // 1. Check if account is currently locked out
+    if (attemptRecord.lockedUntil && attemptRecord.lockedUntil > now) {
+      const remainingSeconds = Math.ceil((attemptRecord.lockedUntil - now) / 1000);
+      const remainingMinutes = Math.ceil(remainingSeconds / 60);
+      return res.status(429).json({
+        success: false,
+        locked: true,
+        message: `Security Lockout Active: Too many failed attempts. Access blocked for ${remainingMinutes} more minute(s) (${remainingSeconds}s remaining).`,
+        remainingSeconds,
+      });
+    }
+
+    // If lockout duration has passed, reset count
+    if (attemptRecord.lockedUntil && attemptRecord.lockedUntil <= now) {
+      attemptRecord.count = 0;
+      attemptRecord.lockedUntil = null;
+    }
+
+    const result = await pool.query(`SELECT * FROM users WHERE email = $1`, [normalizedEmail]);
     const user = result.rows[0];
 
-    if (!user) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    // Check credentials
+    let isMatch = false;
+    if (user) {
+      isMatch = await bcrypt.compare(password, user.password);
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    if (!user || !isMatch) {
+      attemptRecord.count += 1;
+
+      if (attemptRecord.count >= MAX_FAILED_ATTEMPTS) {
+        attemptRecord.lockedUntil = now + LOCKOUT_DURATION_MS;
+        loginAttemptsMap.set(normalizedEmail, attemptRecord);
+        return res.status(429).json({
+          success: false,
+          locked: true,
+          message: `Security Alert: 3 consecutive failed login attempts. This account has been blocked for 5 minutes.`,
+          remainingSeconds: 300,
+          attemptsLeft: 0,
+        });
+      }
+
+      loginAttemptsMap.set(normalizedEmail, attemptRecord);
+      const attemptsLeft = MAX_FAILED_ATTEMPTS - attemptRecord.count;
+      return res.status(401).json({
+        success: false,
+        message: `Invalid email or password. Warning: ${attemptsLeft} attempt(s) remaining before security lockout.`,
+        attemptsLeft,
+        locked: false,
+      });
     }
+
+    // Successful login: reset failed attempts
+    loginAttemptsMap.delete(normalizedEmail);
 
     const token = jwt.sign({ id: user.id, role: user.role }, env.jwtSecret, {
       expiresIn: "1d",

@@ -43,14 +43,20 @@ async function request(path, options = {}) {
     },
     ...options,
   });
-  if (res.status === 401) {
+  if (res.status === 401 && !path.startsWith("/auth/")) {
     localStorage.removeItem("tracex_token");
     localStorage.removeItem("tracex_user");
     window.location.hash = "login";
     throw new Error("Session expired");
   }
-  if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
-  return res.json();
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const error = new Error(data.message || `API error ${res.status}: ${path}`);
+    error.status = res.status;
+    error.data = data;
+    throw error;
+  }
+  return data;
 }
 
 function priorityToScore(label) {
