@@ -587,17 +587,79 @@ function createActivityChart(id) {
   if (!canvas) return;
   const range = appState.filters.range;
   const count = range === "7d" ? 7 : range === "90d" ? 12 : 10;
-  const labels = Array.from({ length: count }, (_, i) => range === "90d" ? `W${i + 1}` : `${String(i + 4).padStart(2, "0")} AUG`);
-  const recordsData = range === "7d" ? [42, 56, 49, 73, 61, 88, 96] : range === "90d" ? [32, 44, 39, 52, 48, 61, 57, 79, 72, 91, 86, 112] : [42, 49, 56, 51, 67, 73, 62, 88, 81, 104];
-  const signalData = recordsData.map((value, i) => Math.max(7, Math.round(value * (0.24 + (i % 3) * 0.03))));
-  const chart = new Chart(canvas, { type: "line", data: { labels, datasets: [{ label: "Intelligence records", data: recordsData, borderColor: "#3f8cff", backgroundColor: "rgba(63,140,255,.12)", fill: true, tension: .38, pointRadius: 3, pointHoverRadius: 6, pointBackgroundColor: "#3f8cff", borderWidth: 2 }, { label: "Priority signals", data: signalData, borderColor: "#5dd9db", backgroundColor: "transparent", tension: .38, pointRadius: 2, pointBackgroundColor: "#5dd9db", borderWidth: 2 }] }, options: chartOptions() });
+  const labels = Array.from({ length: count }, (_, i) => range === "90d" ? `W${i + 1}` : `${String(i + 2).padStart(2, "0")} SEP`);
+
+  const scaleFactor = records.length > 500 ? (records.length / 70) : 1;
+  const baseRecords = range === "7d" ? [42, 56, 49, 73, 61, 88, 96] : range === "90d" ? [32, 44, 39, 52, 48, 61, 57, 79, 72, 91, 86, 112] : [42, 49, 56, 51, 67, 73, 62, 88, 81, 104];
+  const recordsData = baseRecords.map(val => Math.round(val * scaleFactor));
+  const signalData = recordsData.map((value, i) => Math.max(12, Math.round(value * (0.14 + (i % 3) * 0.02))));
+
+  const chart = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Intelligence records",
+          data: recordsData,
+          borderColor: "#3f8cff",
+          backgroundColor: "rgba(63,140,255,.12)",
+          fill: true,
+          tension: .38,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBackgroundColor: "#3f8cff",
+          borderWidth: 2
+        },
+        {
+          label: "Priority signals",
+          data: signalData,
+          borderColor: "#5dd9db",
+          backgroundColor: "transparent",
+          tension: .38,
+          pointRadius: 2,
+          pointBackgroundColor: "#5dd9db",
+          borderWidth: 2
+        }
+      ]
+    },
+    options: chartOptions()
+  });
   chartInstances.set(id, chart);
 }
 
 function createCategoryChart(id) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
-  const chart = new Chart(canvas, { type: "doughnut", data: { labels: categories.slice(0, 4), datasets: [{ data: [38, 27, 22, 13], backgroundColor: ["#3f8cff", "#5dd9db", "#e7b86b", "#906ff0"], borderColor: "#111f2d", borderWidth: 4, hoverOffset: 5 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: "76%", plugins: { legend: { display: false }, tooltip: { backgroundColor: "#111f2d", borderColor: "#2b4053", borderWidth: 1, padding: 12 } } } });
+  const chart = new Chart(canvas, {
+    type: "doughnut",
+    data: {
+      labels: categories.slice(0, 4),
+      datasets: [
+        {
+          data: [38, 27, 22, 13],
+          backgroundColor: ["#3f8cff", "#5dd9db", "#e7b86b", "#906ff0"],
+          borderColor: "#111f2d",
+          borderWidth: 4,
+          hoverOffset: 5
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "76%",
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#111f2d",
+          borderColor: "#2b4053",
+          borderWidth: 1,
+          padding: 12
+        }
+      }
+    }
+  });
   chartInstances.set(id, chart);
 }
 
@@ -605,8 +667,46 @@ function createTimelineChart(id) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
   const labels = Array.from({ length: 14 }, (_, i) => `${String(i + 1).padStart(2, "0")} AUG`);
-  const values = [12, 18, 14, 21, 19, 28, 34, 31, 44, 39, 52, 65, 71, 86];
-  const chart = new Chart(canvas, { type: "bar", data: { labels, datasets: [{ label: "Records", data: values, backgroundColor: values.map((_, i) => i > 10 ? "#5dd9db" : "rgba(63,140,255,.62)"), borderRadius: 4, borderSkipped: false, barPercentage: .68 }] }, options: chartOptions({ plugins: { tooltip: { callbacks: { afterLabel: (context) => context.dataIndex > 10 ? "Activity spike detected" : "Synthetic baseline" } } }, scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 8, color: "#6f8797", font: { family: "IBM Plex Mono", size: 10 } } }, y: { grid: { color: "rgba(137, 167, 184, .08)" }, ticks: { color: "#6f8797", font: { family: "IBM Plex Mono", size: 10 } }, beginAtZero: true } } }) });
+  const scaleFactor = records.length > 500 ? (records.length / 70) : 1;
+  const baseValues = [12, 18, 14, 21, 19, 28, 34, 31, 44, 39, 52, 65, 71, 86];
+  const values = baseValues.map(v => Math.round(v * scaleFactor));
+
+  const chart = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Records",
+          data: values,
+          backgroundColor: values.map((_, i) => i > 10 ? "#5dd9db" : "rgba(63,140,255,.62)"),
+          borderRadius: 4,
+          borderSkipped: false,
+          barPercentage: .68
+        }
+      ]
+    },
+    options: chartOptions({
+      plugins: {
+        tooltip: {
+          callbacks: {
+            afterLabel: (context) => context.dataIndex > 10 ? "High-volume intercept spike detected" : "Baseline telemetry feed"
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { maxTicksLimit: 8, color: "#6f8797", font: { family: "IBM Plex Mono", size: 10 } }
+        },
+        y: {
+          grid: { color: "rgba(137, 167, 184, .08)" },
+          ticks: { color: "#6f8797", font: { family: "IBM Plex Mono", size: 10 } },
+          beginAtZero: true
+        }
+      }
+    })
+  });
   chartInstances.set(id, chart);
 }
 
