@@ -124,13 +124,19 @@ function mapAlert(a) {
 }
 
 function mapTrend(t) {
+  let entList = [];
+  if (Array.isArray(t.entities)) {
+    entList = t.entities;
+  } else if (typeof t.entities === "string") {
+    try { entList = JSON.parse(t.entities); } catch (_) { entList = []; }
+  }
   return {
     id: t.id,
     name: t.name,
-    growth: t.growth_percent,
-    confidence: t.confidence,
-    entities: (t.entities || []).length,
-    entityIds: (t.entities || []).map(String),
+    growth: t.growth_percent ?? t.growth ?? 0,
+    confidence: t.confidence ?? 0,
+    entities: entList.length,
+    entityIds: entList.map(String),
     status: t.status,
     color: t.color,
     description: t.description,
