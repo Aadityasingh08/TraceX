@@ -438,6 +438,15 @@ export const TILE_PROVIDERS = {
     requiresKey: false,
     description: "3D topographical contours and elevation relief by Google Maps."
   },
+  "carto-light": {
+    name: "CARTO Positron Light",
+    badge: "TACTICAL LIGHT / NO KEY NEEDED",
+    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    subdomains: "abcd",
+    maxZoom: 19,
+    requiresKey: false,
+    description: "Crisp, clean high-contrast light cartography optimized for light workspace mode."
+  },
   "carto-dark": {
     name: "CARTO Dark Matter",
     badge: "TACTICAL DARK / NO KEY NEEDED",
@@ -509,8 +518,9 @@ let isSimulationPlaying = true;
 export function applyTileLayer(providerKey, apiKey = "", customUrl = "") {
   if (!mapInstance) return;
 
-  const keyToUse = providerKey || localStorage.getItem("tracex_map_provider") || "carto-dark";
-  const provider = TILE_PROVIDERS[keyToUse] || TILE_PROVIDERS["carto-dark"];
+  const defaultKey = (document.documentElement.getAttribute("data-theme") === "light") ? "carto-light" : "carto-dark";
+  const keyToUse = providerKey || localStorage.getItem("tracex_map_provider") || defaultKey;
+  const provider = TILE_PROVIDERS[keyToUse] || TILE_PROVIDERS[defaultKey] || TILE_PROVIDERS["carto-light"];
 
   if (currentTileLayer) {
     try {
@@ -892,8 +902,9 @@ export function initThreatMap() {
     worldCopyJump: true
   });
 
-  // Apply configured or failsafe Dark Tiles
-  applyTileLayer(localStorage.getItem("tracex_map_provider") || "carto-dark");
+  // Apply configured or failsafe Tiles
+  const defaultProvider = (document.documentElement.getAttribute("data-theme") === "light") ? "carto-light" : "carto-dark";
+  applyTileLayer(localStorage.getItem("tracex_map_provider") || defaultProvider);
 
   // Tactical Zoom Control in top-right
   L.control.zoom({ position: "topright" }).addTo(mapInstance);

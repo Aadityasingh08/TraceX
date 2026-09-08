@@ -3187,5 +3187,310 @@ textarea { min-height: 100px; resize: vertical; }
   color: #4a423d !important;
 }
 
+/* GLOBAL THREAT MAP & HUD LIGHT THEME */
+[data-theme="light"] .threat-map-layout {
+  background: #f7f6f2 !important;
+}
+
+[data-theme="light"] .map-hud-bar {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-bottom: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .hud-eyebrow {
+  color: #c45b45 !important;
+}
+
+[data-theme="light"] .map-hud-bar h2 {
+  color: #2c2522 !important;
+}
+
+[data-theme="light"] .hud-metric-box {
+  background: #faf8f4 !important;
+  border: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .hud-label {
+  color: #8a817c !important;
+}
+
+[data-theme="light"] .hud-metric-box small {
+  color: #6a625d !important;
+}
+
+[data-theme="light"] .map-toolbar {
+  background: #ffffff !important;
+  border-bottom: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .map-search-box {
+  background: #ffffff !important;
+  border: 1px solid #d6d0c4 !important;
+  color: #2c2522 !important;
+}
+
+[data-theme="light"] .map-search-box input {
+  color: #2c2522 !important;
+}
+
+[data-theme="light"] .map-search-box input::placeholder {
+  color: #8a817c !important;
+}
+
+[data-theme="light"] .filter-label {
+  color: #6a625d !important;
+}
+
+[data-theme="light"] .filter-chip {
+  background: #faf8f4 !important;
+  border: 1px solid #d6d0c4 !important;
+  color: #4a423d !important;
+}
+
+[data-theme="light"] .filter-chip:hover {
+  background: #f0ece1 !important;
+  color: #2c2522 !important;
+}
+
+[data-theme="light"] .filter-chip.active {
+  background: #e5dfd4 !important;
+  border-color: #8a817c !important;
+  color: #2c2522 !important;
+  font-weight: 600;
+}
+
+/* MAP TELEMETRY STREAM PANEL */
+[data-theme="light"] .map-telemetry-panel {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid #d6d0c4 !important;
+  box-shadow: 0 10px 30px rgba(70, 63, 58, 0.12) !important;
+}
+
+[data-theme="light"] .telemetry-header {
+  background: #faf8f4 !important;
+  border-bottom: 1px solid #d6d0c4 !important;
+  color: #2c2522 !important;
+}
+
+[data-theme="light"] .telemetry-header strong {
+  color: #2c2522 !important;
+}
+
+[data-theme="light"] .telemetry-item-row {
+  color: #4a423d !important;
+}
+
+[data-theme="light"] .telemetry-item-row:hover {
+  background: #f4f1ea !important;
+}
+
+[data-theme="light"] .tele-time {
+  color: #8a817c !important;
+}
+
+[data-theme="light"] .tele-tag {
+  color: #c45b45 !important;
+}
+
+[data-theme="light"] .tele-msg {
+  color: #4a423d !important;
+}
+
+[data-theme="light"] .tele-msg b {
+  color: #2c2522 !important;
+}
+
+[data-theme="light"] .tele-sev {
+  background: #ede8de !important;
+  color: #4a423d !important;
+}
+
+/* MAP INSPECTOR DRAWER */
+[data-theme="light"] .map-inspector-drawer {
+  background: rgba(255, 255, 255, 0.97) !important;
+  border: 1px solid #d6d0c4 !important;
+  box-shadow: 0 12px 40px rgba(70, 63, 58, 0.15) !important;
+  color: #2c2522 !important;
+}
+
+[data-theme="light"] .inspector-header {
+  border-bottom: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .inspector-eyebrow {
+  color: #8a817c !important;
+}
+
+[data-theme="light"] .inspector-flag-box h3 {
+  color: #2c2522 !important;
+}
+
+[data-theme="light"] .threat-status-tag {
+  background: #f4f1ea !important;
+  border: 1px solid #d6d0c4 !important;
+  color: #4a423d !important;
+}
+
+[data-theme="light"] .inspector-score-card {
+  background: #faf8f4 !important;
+  border: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .score-top span {
+  color: #8a817c !important;
+}
+
+[data-theme="light"] .score-top strong {
+  color: #2c2522 !important;
+}
+
+[data-theme="light"] .score-bar {
+  background: #e5dfd4 !important;
+}
+
+[data-theme="light"] .score-desc {
+  color: #8a817c !important;
+}
+
+[data-theme="light"] .inspector-spec-grid {
+  background: #faf8f4 !important;
+  border: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .spec-row {
+  border-bottom: 1px solid #ede8de !important;
+}
+
+[data-theme="light"] .spec-row span {
+  color: #8a817c !important;
+}
+
+[data-theme="light"] .spec-row b {
+  color: #2c2522 !important;
+}
+
+[data-theme="light"] .spec-row small {
+  color: #6a625d !important;
+}
+
+[data-theme="light"] .highlighted-row {
+  background: rgba(196, 91, 69, 0.08) !important;
+}
+
+[data-theme="light"] .inspector-entity-link {
+  color: #c45b45 !important;
+}
+
+[data-theme="light"] .inspector-analysis {
+  border-top: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .analysis-label {
+  color: #c45b45 !important;
+}
+
+[data-theme="light"] .inspector-analysis p {
+  color: #4a423d !important;
+}
+
+[data-theme="light"] .marker-label {
+  background: #ffffff !important;
+  border: 1px solid #d6d0c4 !important;
+  color: #2c2522 !important;
+  box-shadow: 0 4px 12px rgba(70, 63, 58, 0.12) !important;
+}
+
+[data-theme="light"] .leaflet-control-zoom a {
+  background: #ffffff !important;
+  color: #2c2522 !important;
+  border-bottom: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .leaflet-control-zoom a:hover {
+  background: #f4f1ea !important;
+  color: #c45b45 !important;
+}
+
+/* MODALS & POPUPS LIGHT THEME */
+[data-theme="light"] .new-inv-modal,
+[data-theme="light"] .map-config-modal {
+  background: #ffffff !important;
+  border: 1px solid #d6d0c4 !important;
+  box-shadow: 0 24px 60px rgba(70, 63, 58, 0.2) !important;
+}
+
+[data-theme="light"] .new-inv-banner,
+[data-theme="light"] .map-config-banner {
+  background: #faf8f4 !important;
+  border: 1px solid #d6d0c4 !important;
+  color: #4a423d !important;
+}
+
+[data-theme="light"] .raw-data-section {
+  background: #faf8f4 !important;
+  border: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .raw-data-title {
+  color: #c45b45 !important;
+}
+
+[data-theme="light"] .raw-textarea {
+  background: #ffffff !important;
+  border: 1px solid #d6d0c4 !important;
+  color: #2c2522 !important;
+  box-shadow: inset 0 2px 6px rgba(70, 63, 58, 0.05) !important;
+}
+
+[data-theme="light"] .raw-textarea:focus {
+  border-color: #c45b45 !important;
+  box-shadow: inset 0 2px 6px rgba(70, 63, 58, 0.05), 0 0 0 3px rgba(196, 91, 69, 0.16) !important;
+}
+
+[data-theme="light"] .sample-pill-btn {
+  background: #ffffff !important;
+  border: 1px solid #d6d0c4 !important;
+  color: #4a423d !important;
+}
+
+[data-theme="light"] .sample-pill-btn:hover {
+  background: #f4f1ea !important;
+  border-color: #c45b45 !important;
+  color: #c45b45 !important;
+}
+
+[data-theme="light"] .pipeline-options {
+  border-top: 1px solid #ede8de !important;
+}
+
+[data-theme="light"] .pipeline-checkbox {
+  color: #4a423d !important;
+}
+
+[data-theme="light"] .tile-provider-card {
+  background: #faf8f4 !important;
+  border: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .tile-provider-card:hover {
+  background: #f4f1ea !important;
+  border-color: #c45b45 !important;
+}
+
+[data-theme="light"] .tile-provider-card.active {
+  background: #ffffff !important;
+  border-color: #c45b45 !important;
+  box-shadow: 0 0 0 2px rgba(196, 91, 69, 0.2) !important;
+}
+
+[data-theme="light"] .provider-name {
+  color: #2c2522 !important;
+  font-weight: 600;
+}
+
+[data-theme="light"] .provider-desc {
+  color: #6a625d !important;
+}
+
 
 
