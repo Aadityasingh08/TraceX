@@ -65,8 +65,32 @@ const activityLabels = [
 
 const topics = ["Command & Control", "Data Exfiltration", "Crypto Laundering", "Identity & Alias", "Network Infrastructure", "Anomalous Traffic"];
 
-export const records = Array.from({ length: 300 }, (_, index) => {
+const OPERATIVE_NAMES = [
+  "Aarav Sharma", "Vivaan Patel", "Aditya Verma", "Vihaan Singh", "Arjun Gupta",
+  "Sai Kumar", "Reyansh Reddy", "Ayaan Joshi", "Krishna Nair", "Ishaan Malhotra",
+  "Shaurya Rao", "Atharva Das", "Dhruv Mehta", "Kabir Bhatia", "Rudra Sengupta",
+  "Ananya Iyer", "Diya Mukherjee", "Gauri Pillai", "Aadhya Chauhan", "Pari Bhattacharya",
+  "Priya Joshi", "Siddharth Gupta", "Farhan Singh", "Deepak Nair", "Tariq Choudhury",
+  "Vikram Das", "Neha Nair", "Kavya Menon", "Rohan Roy", "Anika Jain"
+];
+
+const LOCATIONS = [
+  "Mumbai, Maharashtra", "Delhi, NCR", "Bengaluru, Karnataka", "Hyderabad, Telangana",
+  "Chennai, Tamil Nadu", "Kolkata, West Bengal", "Pune, Maharashtra", "Ahmedabad, Gujarat",
+  "Jaipur, Rajasthan", "Lucknow, Uttar Pradesh", "Chandigarh, Punjab", "Kochi, Kerala",
+  "Goa, Panaji", "Ludhiana, Punjab", "Surat, Gujarat", "Indore, Madhya Pradesh",
+  "Nagpur, Maharashtra", "Frankfurt, Germany", "Zurich, Switzerland", "Dubai, UAE"
+];
+
+export const records = Array.from({ length: 15000 }, (_, index) => {
   const entity = entities[index % entities.length];
+  const name = OPERATIVE_NAMES[index % OPERATIVE_NAMES.length];
+  const loc = LOCATIONS[index % LOCATIONS.length];
+  const handle = `@${name.toLowerCase().replace(/\s+/g, "_")}_${(index % 90) + 10}`;
+  const phone = `+91${8000000000 + ((index * 1337) % 1999999999)}`;
+  const email = `${name.toLowerCase().replace(/\s+/g, ".")}${(index % 999)}@secure-mail.org`;
+  const wallet = `0x${((index + 1) * 12345678901234).toString(16).padEnd(40, "a").slice(0, 40)}`;
+
   const day = (index * 2) % 90;
   const hour = (index * 7) % 24;
   const minute = (index * 13) % 60;
@@ -75,12 +99,19 @@ export const records = Array.from({ length: 300 }, (_, index) => {
 
   const actType = activityLabels[index % activityLabels.length];
   return {
-    id: `IR-${String(index + 1).padStart(4, "0")}`,
+    id: `IR-${String(index + 1).padStart(5, "0")}`,
     entityId: entity.id,
     sourceId: sourceIds[index % sourceIds.length],
+    sourceLabel: sourceIds[index % sourceIds.length],
     type: actType,
-    title: `${entity.id} · ${actType}`,
-    snippet: `Telemetry record ${index + 1}: ${entity.id} (${entity.type}) observed exhibiting ${actType.toLowerCase()} via ${sourceIds[index % sourceIds.length]}. Signal confidence: ${68 + ((index * 11) % 28)}%.`,
+    title: `Intel Signal #${index + 1} — ${name} (${loc.split(",")[0]})`,
+    personName: name,
+    telegramHandle: handle,
+    phone: phone,
+    email: email,
+    location: loc,
+    walletAddress: wallet,
+    snippet: `Consignment transit telemetry #${index + 1}. Operative: ${name} (${handle}), Phone: ${phone}, Location: ${loc}. Intercept confirmed encrypted communications via ${sourceIds[index % sourceIds.length]}. Settlement wallet: ${wallet}.`,
     timestamp: date.toISOString().slice(0, 16).replace("T", " "),
     confidence: 65 + ((index * 11) % 31),
     topic: topics[index % topics.length]
