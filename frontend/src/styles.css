@@ -2868,3 +2868,94 @@ textarea { min-height: 100px; resize: vertical; }
   padding: 14px;
 }
 
+/* Bulk File Upload & Dropzone */
+.file-dropzone {
+  border: 2px dashed rgba(93, 217, 219, 0.35);
+  border-radius: 8px;
+  padding: 18px 16px;
+  background: rgba(93, 217, 219, 0.03);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  position: relative;
+}
+.file-dropzone:hover, .file-dropzone.dragover {
+  border-color: var(--cyan);
+  background: rgba(93, 217, 219, 0.08);
+  box-shadow: 0 0 16px rgba(93, 217, 219, 0.15);
+}
+.dropzone-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--cyan);
+}
+.dropzone-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+.dropzone-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+.file-info-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(93, 217, 219, 0.3);
+  border-radius: 6px;
+  margin-top: 8px;
+  animation: fadeIn 0.2s ease;
+}
+.file-info-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.file-info-name {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--cyan);
+  font-family: var(--mono);
+}
+.file-info-size {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+.file-preview-pill {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(87, 217, 163, 0.15);
+  color: #57d9a3;
+  font-size: 11px;
+  font-family: var(--mono);
+  font-weight: 600;
+  border: 1px solid rgba(87, 217, 163, 0.3);
+}
+.upload-progress-container {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  height: 6px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.upload-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--cyan));
+  width: 0%;
+  transition: width 0.15s ease;
+}
+
+

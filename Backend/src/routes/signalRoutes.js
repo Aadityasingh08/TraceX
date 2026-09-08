@@ -13,7 +13,7 @@ import {
 } from "../controllers/signalController.js";
 import { validateSubmitRecord, validateReviewCandidate } from "../middleware/validateRequest.js";
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
 const router = express.Router();
 

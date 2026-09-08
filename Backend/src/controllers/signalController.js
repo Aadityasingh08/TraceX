@@ -137,16 +137,130 @@ export async function uploadRecord(req, res, next) {
     if (!req.file) {
       return res.status(400).json({ success: false, message: "file is required (field name: file)" });
     }
-    const snippet = req.file.buffer.toString("utf-8").slice(0, 5000);
-    const id = crypto.randomUUID();
 
-    await pool.query(
-      `INSERT INTO signals (id, entity_id, source_id, source, type, title, snippet, timestamp, confidence, topic)
-       VALUES ($1, NULL, NULL, $2, 'submission', $3, $4, $5, NULL, NULL)`,
-      [id, "file_upload", req.file.originalname, snippet, new Date().toISOString()]
-    );
+    const filename = req.file.originalname || "intelligence_data.json";
+    const rawContent = req.file.buffer.toString("utf-8");
+    const investigationId = req.body.investigationId ? parseInt(req.body.investigationId, 10) : null;
+    let parsedRecords = [];
 
-    const candidates = await analyzeSignal(id, snippet);
-    res.status(201).json({ success: true, signalId: id, filename: req.file.originalname, candidates });
+    // 1. Try parsing as JSON
+    if (filename.endsWith(".json") || rawContent.trim().startsWith("[") || rawContent.trim().startsWith("{")) {
+      try {
+        const parsed = JSON.parse(rawContent);
+        if (Array.isArray(parsed)) {
+          parsedRecords = parsed;
+        } else if (typeof parsed === "object" && parsed !== null) {
+          if (Array.isArray(parsed.records)) parsedRecords = parsed.records;
+          else if (Array.isArray(parsed.signals)) parsedRecords = parsed.signals;
+          else if (Array.isArray(parsed.data)) parsedRecords = parsed.data;
+          else parsedRecords = [parsed];
+        }
+      } catch (_) {}
+    }
+
+    // 2. Try parsing as CSV
+    if (parsedRecords.length === 0 && (filename.endsWith(".csv") || rawContent.includes(","))) {
+      const lines = rawContent.split(/\r?\n/).filter((l) => l.trim().length > 0);
+      if (lines.length > 1) {
+        const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/^["']|["']$/g, ""));
+        for (let i = 1; i < lines.length; i++) {
+          const rowVals = lines[i].split(",").map((v) => v.trim().replace(/^["']|["']$/g, ""));
+          const rowObj = {};
+          headers.forEach((h, idx) => {
+            rowObj[h] = rowVals[idx] || "";
+          });
+          parsedRecords.push(rowObj);
+        }
+      }
+    }
+
+    // 3. Fallback: single or line-delimited records
+    if (parsedRecords.length === 0) {
+      const lines = rawContent.split(/\r?\n/).filter((l) => l.trim().length > 0);
+      if (lines.length > 1 && lines.length <= 10000) {
+        parsedRecords = lines.map((line, idx) => ({
+          title: `Line #${idx + 1} - ${filename}`,
+          snippet: line,
+        }));
+      } else {
+        parsedRecords = [{
+          title: `File Upload - ${filename}`,
+          snippet: rawContent.slice(0, 8000),
+        }];
+      }
+    }
+
+    // 4. Batch Ingest into PostgreSQL
+    const BATCH_SIZE = 500;
+    let totalInserted = 0;
+
+    for (let i = 0; i < parsedRecords.length; i += BATCH_SIZE) {
+      const chunk = parsedRecords.slice(i, i + BATCH_SIZE);
+      const values = [];
+      const params = [];
+      let pIdx = 1;
+
+      for (const item of chunk) {
+        const id = crypto.randomUUID();
+        const title = item.title || item.name || `Intel Record #${totalInserted + values.length + 1} (${filename})`;
+        const snippet = item.snippet || item.description || item.text || JSON.stringify(item);
+        const source = item.source || item.sourceLabel || item.source_channel || `Upload / ${filename}`;
+        const topic = item.topic || item.category || "surveillance";
+        const type = item.type || "bulk_intel";
+        const confidence = typeof item.confidence === "number" ? item.confidence : 0.85;
+        const timestamp = item.timestamp || item.date || new Date().toISOString();
+        const personName = item.person_name || item.personName || item.operative || item.name || null;
+        const phone = item.phone || item.mobile || item.contact || null;
+        const telegram = item.telegram_handle || item.telegramHandle || item.telegram || item.handle || null;
+        const email = item.email || null;
+        const location = item.location || item.city || null;
+        const wallet = item.wallet_address || item.walletAddress || item.wallet || null;
+
+        values.push(`($${pIdx}, $${pIdx+1}, $${pIdx+2}, $${pIdx+3}, $${pIdx+4}, $${pIdx+5}, $${pIdx+6}, $${pIdx+7}, $${pIdx+8}, $${pIdx+9}, $${pIdx+10}, $${pIdx+11}, $${pIdx+12}, $${pIdx+13}, $${pIdx+14}, 'VERIFIED')`);
+        params.push(
+          id,
+          title,
+          snippet,
+          source,
+          investigationId,
+          topic,
+          type,
+          confidence,
+          timestamp,
+          personName,
+          location,
+          phone,
+          email,
+          telegram,
+          wallet
+        );
+        pIdx += 15;
+      }
+
+      const insertSql = `
+        INSERT INTO signals (
+          id, title, snippet, source, investigation_id, topic, type, confidence,
+          timestamp, person_name, location, phone, email, telegram_handle, wallet_address,
+          verification_status
+        ) VALUES ${values.join(", ")}
+      `;
+
+      await pool.query(insertSql, params);
+      totalInserted += chunk.length;
+    }
+
+    // Run first record extraction analysis if single or small upload
+    let candidates = [];
+    if (parsedRecords.length === 1 && parsedRecords[0].snippet) {
+      candidates = await analyzeSignal(crypto.randomUUID(), parsedRecords[0].snippet).catch(() => []);
+    }
+
+    res.status(201).json({
+      success: true,
+      count: totalInserted,
+      filename,
+      message: `Successfully ingested ${totalInserted.toLocaleString()} intelligence records from ${filename}`,
+      candidates,
+    });
   } catch (err) { next(err); }
 }

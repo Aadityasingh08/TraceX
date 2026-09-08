@@ -196,6 +196,29 @@ export const api = {
   getRecords: () => request("/records"),
   getRecordCandidates: (id) => request(`/records/${id}/candidates`),
   analyzeRecord: (id) => request(`/records/${id}/analyze`, { method: "POST" }),
+  uploadIntelligenceFile: async (file, investigationId = null) => {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append("file", file);
+    if (investigationId) formData.append("investigationId", investigationId);
+
+    const res = await fetch(`${BASE_URL}/records/upload`, {
+      method: "POST",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const error = new Error(data.message || `Upload error: ${res.status}`);
+      error.status = res.status;
+      error.data = data;
+      throw error;
+    }
+    return data;
+  },
   getCategories: () => request("/categories"),
   getNotifications: () => request("/notifications"),
   getAuditLogs: async () => {
