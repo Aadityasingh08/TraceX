@@ -9,12 +9,21 @@ export const appState = {
   selectedTrend: "TREND-01",
   demoMode: false,
   route: "dashboard",
+  theme: localStorage.getItem("tracex_theme") || "dark",
   sidebarCollapsed: false,
   filters: { range: "30d", severity: "ALL", alertStatus: "ALL", entityQuery: "" },
   notifications: [],
   toast: null,
   lastAction: null
 };
+
+export function toggleTheme() {
+  const nextTheme = appState.theme === "light" ? "dark" : "light";
+  localStorage.setItem("tracex_theme", nextTheme);
+  document.documentElement.setAttribute("data-theme", nextTheme);
+  setState({ theme: nextTheme });
+  pushToast(`Switched to ${nextTheme === "light" ? "Light" : "Dark"} Palette`, "info");
+}
 
 export function getState() {
   return appState;

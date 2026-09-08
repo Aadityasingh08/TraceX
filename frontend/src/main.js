@@ -3,7 +3,7 @@ import cytoscape from "cytoscape";
 import { createIcons, icons } from "lucide";
 import { api, recordAuditEvent } from "./api.js";
 import { getRoute, navigate, subscribeRoute } from "./router.js";
-import { appState, clearUnreadNotifications, markNotificationRead, pushToast, selectAlert, selectEntity, selectEvidence, selectTrend, setState } from "./state.js";
+import { appState, clearUnreadNotifications, markNotificationRead, pushToast, selectAlert, selectEntity, selectEvidence, selectTrend, setState, toggleTheme } from "./state.js";
 import { emptyState, escapeHtml, formatNumber, icon, initials, priorityBadge, sectionHeading, statusBadge } from "./ui.js";
 import { renderThreatMapPage, initThreatMap, destroyThreatMap } from "./threat-map.js";
 import { initCopilot, openCopilot } from "./copilot.js";
@@ -202,7 +202,7 @@ function renderShell(route) {
       <div class="sidebar-bottom"><div class="system-status"><span class="status-dot status-dot-live"></span><div><small>SYSTEM STATUS</small><strong>Operational</strong></div><span class="system-bars">▂▅▇</span></div><button class="nav-item" data-route="audit">${icon("settings-2")}<span>Workspace Settings</span></button></div>
     </aside>
     <div class="main-shell">
-      <header class="topbar"><div class="topbar-left"><button class="icon-button mobile-menu" data-action="collapse-sidebar" aria-label="Open navigation">${icon("menu")}</button><div class="breadcrumb"><span>TRACE-X</span><i>/</i><strong>${routeLabels[route] ?? "Workspace"}</strong></div></div><div class="topbar-actions"><button class="topbar-action-btn ingest-btn" data-action="ingest-target" title="Ingest Target or Indicator (Alt+N)">${icon("shield-plus")}<span>+ INGEST TARGET / IOC</span><kbd>Alt N</kbd></button><button class="copilot-topbar-trigger" data-action="open-copilot">${icon("sparkles")}<span>AI COPILOT</span><kbd>⌘ J</kbd></button><button class="search-trigger" data-action="open-search">${icon("search")}<span>Search intelligence</span><kbd>⌘ K</kbd></button><button class="icon-button notification-trigger" data-action="open-notifications" aria-label="Notifications">${icon("bell")}<span class="notification-dot ${unread ? "visible" : ""}"></span></button><span class="demo-pill"><i></i> LIVE</span><button class="profile-trigger" data-action="open-profile"><span class="avatar">${appState.user.initials}</span><span class="profile-copy"><strong>${escapeHtml(appState.user.name)}</strong><small>${escapeHtml(appState.user.role)}</small></span>${icon("chevron-down")}</button></div></header>
+      <header class="topbar"><div class="topbar-left"><button class="icon-button mobile-menu" data-action="collapse-sidebar" aria-label="Open navigation">${icon("menu")}</button><div class="breadcrumb"><span>TRACE-X</span><i>/</i><strong>${routeLabels[route] ?? "Workspace"}</strong></div></div><div class="topbar-actions"><button class="topbar-action-btn ingest-btn" data-action="ingest-target" title="Ingest Target or Indicator (Alt+N)">${icon("shield-plus")}<span>+ INGEST TARGET / IOC</span><kbd>Alt N</kbd></button><button class="copilot-topbar-trigger" data-action="open-copilot">${icon("sparkles")}<span>AI COPILOT</span><kbd>⌘ J</kbd></button><button class="search-trigger" data-action="open-search">${icon("search")}<span>Search intelligence</span><kbd>⌘ K</kbd></button><button class="icon-button theme-toggle-btn" data-action="toggle-theme" title="Switch Theme (Dark / Light)" aria-label="Toggle Theme">${icon(appState.theme === "light" ? "moon" : "sun")}</button><button class="icon-button notification-trigger" data-action="open-notifications" aria-label="Notifications">${icon("bell")}<span class="notification-dot ${unread ? "visible" : ""}"></span></button><span class="demo-pill"><i></i> LIVE</span><button class="profile-trigger" data-action="open-profile"><span class="avatar">${appState.user.initials}</span><span class="profile-copy"><strong>${escapeHtml(appState.user.name)}</strong><small>${escapeHtml(appState.user.role)}</small></span>${icon("chevron-down")}</button></div></header>
       <main class="content-area">${renderPage(route)}</main>
 
     </div>
@@ -1700,12 +1700,13 @@ function openNotifications() {
 }
 
 function openProfile() {
-  openOverlay(`<div class="profile-menu"><div class="profile-menu-header"><span class="avatar large">${appState.user.initials}</span><div><strong>${escapeHtml(appState.user.name)}</strong><small>${escapeHtml(appState.user.role)} · LIVE SESSION</small></div></div><div class="profile-menu-list"><button data-route="audit">${icon("scroll-text")} Audit trail</button><button data-action="workspace-status">${icon("shield-check")} System status <span class="status-live-text">Operational</span></button><button data-action="signout">${icon("log-out")} Return to access gateway</button></div></div>`, "profile-overlay");
+  openOverlay(`<div class="profile-menu"><div class="profile-menu-header"><span class="avatar large">${appState.user.initials}</span><div><strong>${escapeHtml(appState.user.name)}</strong><small>${escapeHtml(appState.user.role)} · LIVE SESSION</small></div></div><div class="profile-menu-list"><button data-action="toggle-theme">${icon(appState.theme === "light" ? "moon" : "sun")} <span>Theme: <b>${appState.theme === "light" ? "Light" : "Dark"} Palette</b></span></button><button data-route="audit">${icon("scroll-text")} Audit trail</button><button data-action="workspace-status">${icon("shield-check")} System status <span class="status-live-text">Operational</span></button><button data-action="signout">${icon("log-out")} Return to access gateway</button></div></div>`, "profile-overlay");
 }
 
 async function handleAction(action, element) {
   switch (action) {
     case "toggle-password": { const input = element.parentElement.querySelector("input"); if (input) input.type = input.type === "password" ? "text" : "password"; break; }
+    case "toggle-theme": toggleTheme(); renderApp(); break;
     case "collapse-sidebar": setState({ sidebarCollapsed: !appState.sidebarCollapsed }); renderApp(); break;
     case "open-search": openSearch(); break;
     case "ingest-target": openIngestTargetModal(); break;
@@ -2094,6 +2095,7 @@ document.addEventListener("submit", async (event) => {
 });
 document.addEventListener("click", (event) => { const target = event.target.closest("[data-action=submit-review]"); if (target) submitReview(target.dataset.alertId); });
 
+document.documentElement.setAttribute("data-theme", appState.theme);
 subscribeRoute(() => renderApp());
 if (!localStorage.getItem("tracex_token")) {
   window.location.hash = "login";
