@@ -9,7 +9,7 @@ export const appState = {
   selectedTrend: "TREND-01",
   demoMode: false,
   route: "dashboard",
-  theme: localStorage.getItem("tracex_theme") || "dark",
+  theme: localStorage.getItem("tracex_theme") || "light",
   sidebarCollapsed: false,
   filters: { range: "30d", severity: "ALL", alertStatus: "ALL", entityQuery: "" },
   notifications: [],

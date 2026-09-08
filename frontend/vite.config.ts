@@ -1,5 +1,4 @@
 import path from "path";
-
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
@@ -8,6 +7,9 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: true,
     port: 5173,
+    watch: {
+      ignored: ["**/dist/**", "**/*.pdf"],
+    },
     hmr: {
       overlay: false,
     },
@@ -15,10 +17,8 @@ export default defineConfig(({ mode }) => ({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(import.meta.dirname || process.cwd(), "./src"),
     },
   },
-  // Expose both VITE_* (Vite default) and EXPO_PUBLIC_* (Rork's cross-platform
-  // public-env convention, written by tools like getOrCreateAuthConfig).
   envPrefix: ["VITE_", "EXPO_PUBLIC_"],
 }));

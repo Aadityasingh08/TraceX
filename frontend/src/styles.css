@@ -1,6 +1,35 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
-:root, [data-theme="dark"] {
+:root, [data-theme="light"] {
+  /* Warm Coolors Light Theme (463f3a, 8a817c, bcb8b1, f4f3ee, e0afa0) */
+  --bg: #f7f6f2;
+  --bg-deep: #eae7df;
+  --panel: #ffffff;
+  --panel-2: #faf8f4;
+  --panel-3: #f0ebe1;
+  --panel-hover: #ece5d8;
+  --line: #d6d0c4;
+  --line-soft: rgba(70, 63, 58, 0.12);
+  --text: #2c2522;
+  --text-2: #4a423d;
+  --muted: #787069;
+  --blue: #c25b45;
+  --cyan: #b8523c;
+  --cyan-soft: rgba(224, 175, 160, 0.28);
+  --amber: #b26820;
+  --amber-soft: rgba(178, 104, 32, 0.15);
+  --red: #c93b2b;
+  --red-soft: rgba(201, 59, 43, 0.15);
+  --violet: #784882;
+  --green: #287a48;
+  --shadow: 0 8px 30px rgba(70, 63, 58, 0.08), 0 2px 6px rgba(70, 63, 58, 0.04);
+  --radius: 12px;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
   /* Warm Coolors Dark Theme (463f3a, 8a817c, bcb8b1, f4f3ee, e0afa0) */
   --bg: #1e1b18;
   --bg-deep: #141210;
@@ -27,35 +56,6 @@
   --mono: 'IBM Plex Mono', monospace;
   --sans: 'DM Sans', sans-serif;
   color-scheme: dark;
-}
-
-[data-theme="light"] {
-  /* Warm Coolors Light Theme (463f3a, 8a817c, bcb8b1, f4f3ee, e0afa0) */
-  --bg: #f4f3ee;
-  --bg-deep: #eae7df;
-  --panel: #ffffff;
-  --panel-2: #faf9f6;
-  --panel-3: #edeae1;
-  --panel-hover: #e3dfd5;
-  --line: #bcb8b1;
-  --line-soft: rgba(138, 129, 124, 0.22);
-  --text: #2c2724;
-  --text-2: #463f3a;
-  --muted: #8a817c;
-  --blue: #a35d4d;
-  --cyan: #b86754;
-  --cyan-soft: rgba(224, 175, 160, 0.28);
-  --amber: #b87332;
-  --amber-soft: rgba(184, 115, 50, 0.16);
-  --red: #c94436;
-  --red-soft: rgba(201, 68, 54, 0.16);
-  --violet: #785382;
-  --green: #3d8756;
-  --shadow: 0 14px 40px rgba(70, 63, 58, 0.1);
-  --radius: 12px;
-  --mono: 'IBM Plex Mono', monospace;
-  --sans: 'DM Sans', sans-serif;
-  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -2988,5 +2988,204 @@ textarea { min-height: 100px; resize: vertical; }
   width: 0%;
   transition: width 0.15s ease;
 }
+
+/* ==========================================================================
+   PRISTINE WARM LIGHT THEME SPECIALIZED OVERRIDES
+   Palette: 463f3a (Charcoal), 8a817c (Slate), bcb8b1 (Stone), f4f3ee (Sandstone), e0afa0 (Rose)
+   ========================================================================== */
+
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: #ffffff !important;
+  color: #2c2522 !important;
+  border: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] input:hover,
+[data-theme="light"] select:hover,
+[data-theme="light"] textarea:hover,
+[data-theme="light"] input:focus,
+[data-theme="light"] select:focus,
+[data-theme="light"] textarea:focus {
+  border-color: var(--cyan) !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(184, 82, 60, 0.16) !important;
+}
+
+[data-theme="light"] .button {
+  background: #ffffff;
+  border-color: #d6d0c4;
+  color: #4a423d;
+  box-shadow: 0 1px 3px rgba(70, 63, 58, 0.05);
+}
+
+[data-theme="light"] .button:hover {
+  background: #f7f5f0;
+  color: #2c2522;
+  border-color: #bcb8b1;
+}
+
+[data-theme="light"] .button-glow {
+  background: linear-gradient(135deg, #c45b45 0%, #db7b68 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(196, 91, 69, 0.32) !important;
+}
+
+[data-theme="light"] .button-primary {
+  background: #c45b45 !important;
+  border-color: #c45b45 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .button-primary:hover {
+  background: #b14e39 !important;
+  border-color: #b14e39 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .topbar {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-bottom: 1px solid #d6d0c4 !important;
+  backdrop-filter: blur(14px);
+}
+
+[data-theme="light"] .sidebar {
+  background: #faf8f4 !important;
+  border-right: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .panel,
+[data-theme="light"] .metric-card,
+[data-theme="light"] .investigation-card,
+[data-theme="light"] .data-card,
+[data-theme="light"] .table-card,
+[data-theme="light"] .stat-card,
+[data-theme="light"] .threat-card,
+[data-theme="light"] .analytics-panel,
+[data-theme="light"] .network-workspace {
+  background: #ffffff !important;
+  border: 1px solid #d6d0c4 !important;
+  box-shadow: 0 2px 10px rgba(70, 63, 58, 0.04) !important;
+}
+
+[data-theme="light"] .investigation-card.featured,
+[data-theme="light"] .investigation-hero,
+[data-theme="light"] .judge-callout,
+[data-theme="light"] .report-modal-cover,
+[data-theme="light"] .report-cover,
+[data-theme="light"] .audit-banner {
+  background: #faf8f4 !important;
+  border: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .investigation-hero h2,
+[data-theme="light"] .judge-callout h2,
+[data-theme="light"] .report-cover h2,
+[data-theme="light"] .audit-banner h2 {
+  color: #2c2522 !important;
+}
+
+[data-theme="light"] .overlay-backdrop {
+  background: rgba(44, 37, 34, 0.42) !important;
+  backdrop-filter: blur(6px);
+}
+
+[data-theme="light"] .overlay-card,
+[data-theme="light"] .modal-overlay,
+[data-theme="light"] .drawer-overlay,
+[data-theme="light"] .profile-overlay,
+[data-theme="light"] .search-overlay {
+  background: #ffffff !important;
+  border: 1px solid #d6d0c4 !important;
+  box-shadow: 0 20px 60px rgba(70, 63, 58, 0.18) !important;
+}
+
+[data-theme="light"] .graph-stage {
+  background-color: #f6f4ee !important;
+  background-image: linear-gradient(rgba(188, 184, 177, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(188, 184, 177, 0.3) 1px, transparent 1px) !important;
+}
+
+[data-theme="light"] .graph-legend {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border: 1px solid #d6d0c4 !important;
+  color: #4a423d !important;
+  box-shadow: 0 2px 8px rgba(70, 63, 58, 0.08);
+}
+
+[data-theme="light"] .threat-leaflet-stage,
+[data-theme="light"] .leaflet-container {
+  background: #ece7dc !important;
+}
+
+[data-theme="light"] .leaflet-tile {
+  filter: brightness(1.02) contrast(1.04) saturate(1.08) !important;
+}
+
+[data-theme="light"] .leaflet-control-zoom {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .file-dropzone {
+  background: #faf8f4 !important;
+  border: 1.5px dashed #bcb8b1 !important;
+}
+
+[data-theme="light"] .file-dropzone.dragover,
+[data-theme="light"] .file-dropzone:hover {
+  background: rgba(224, 175, 160, 0.2) !important;
+  border-color: var(--cyan) !important;
+}
+
+[data-theme="light"] .file-info-box {
+  background: #faf8f4 !important;
+  border: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .upload-progress-container {
+  background: #e5dfd4 !important;
+}
+
+[data-theme="light"] .login-screen {
+  background: #f7f6f2 !important;
+}
+
+[data-theme="light"] .login-rail {
+  background: linear-gradient(112deg, #eae7df 0%, #ffffff 70%, transparent 100%) !important;
+}
+
+[data-theme="light"] .login-side {
+  background: rgba(250, 248, 244, 0.85) !important;
+  border-left: 1px solid #d6d0c4 !important;
+}
+
+[data-theme="light"] .lockout-countdown-box {
+  background: #fff5f5 !important;
+  border: 1px solid #fecaca !important;
+}
+
+[data-theme="light"] .lockout-timer {
+  color: #dc2626 !important;
+}
+
+[data-theme="light"] .priority-row:hover,
+[data-theme="light"] .relation-row:hover,
+[data-theme="light"] .record-row:hover,
+[data-theme="light"] .trend-compact:hover,
+[data-theme="light"] .search-result:hover,
+[data-theme="light"] .notification-row:hover {
+  background: rgba(224, 175, 160, 0.12) !important;
+}
+
+[data-theme="light"] kbd,
+[data-theme="light"] .search-trigger kbd {
+  background: #ede8de !important;
+  border: 1px solid #d6d0c4 !important;
+  border-bottom-color: #bcb8b1 !important;
+  color: #4a423d !important;
+}
+
 
 
