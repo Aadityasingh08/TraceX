@@ -48,6 +48,33 @@ export async function extractCandidates(text) {
     }
   }
 
+  // Optional ML Service spaCy NER Extraction
+  const ML_URL = process.env.ML_SERVICE_URL || "http://127.0.0.1:8000";
+  try {
+    const mlResponse = await fetch(`${ML_URL}/extract-entities`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+      signal: AbortSignal.timeout(600), // Fast 600ms timeout
+    });
+    if (mlResponse.ok) {
+      const mlData = await mlResponse.json();
+      if (Array.isArray(mlData.entities)) {
+        for (const ent of mlData.entities) {
+          candidates.push({
+            type: ent.label ? ent.label.toLowerCase() : "ner_entity",
+            value: ent.text,
+            canonicalValue: ent.text,
+            confidence: 0.88,
+            matchedPattern: `spacy:${ent.label || "NER"}`,
+          });
+        }
+      }
+    }
+  } catch (mlErr) {
+    // ML service optional fallback — rule-based & keyword dictionary extraction continue uninterrupted
+  }
+
   return candidates;
 }
 

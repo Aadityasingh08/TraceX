@@ -2,14 +2,47 @@ import pool from "../config/db.js";
 
 export async function getRelationships(req, res, next) {
   try {
-    const result = await pool.query(
-      `SELECT id,
-              source_id AS "sourceId",
-              target_id AS "targetId",
-              type, confidence,
-              created_at AS "timestamp"
-       FROM relationships`
-    );
+    const { investigationId, sourceId, targetId, type, limit, offset } = req.query;
+    let query = `
+      SELECT id,
+             source_id AS "sourceId",
+             target_id AS "targetId",
+             type, confidence,
+             created_at AS "timestamp"
+      FROM relationships
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (investigationId) {
+      params.push(Number(investigationId));
+      query += ` AND investigation_id = $${params.length}`;
+    }
+    if (sourceId) {
+      params.push(Number(sourceId));
+      query += ` AND (source_id = $${params.length} OR target_id = $${params.length})`;
+    }
+    if (targetId) {
+      params.push(Number(targetId));
+      query += ` AND target_id = $${params.length}`;
+    }
+    if (type) {
+      params.push(String(type).toUpperCase());
+      query += ` AND type = $${params.length}`;
+    }
+
+    query += ` ORDER BY id ASC`;
+
+    if (limit) {
+      params.push(Math.min(Math.max(Number(limit) || 50, 1), 5000));
+      query += ` LIMIT $${params.length}`;
+    }
+    if (offset) {
+      params.push(Math.max(Number(offset) || 0, 0));
+      query += ` OFFSET $${params.length}`;
+    }
+
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) { next(err); }
 }

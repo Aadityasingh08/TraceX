@@ -1,13 +1,15 @@
-const validRoutes = new Set(["dashboard", "investigations", "entities", "entity", "network", "timeline", "fusion", "trends", "alerts", "evidence", "reports", "audit", "login", "signup"]);
+const validRoutes = new Set(["dashboard", "investigations", "map", "threat-map", "entities", "entity", "network", "timeline", "records", "fusion", "trends", "alerts", "evidence", "reports", "audit", "login", "signup"]);
 const listeners = new Set();
 
 export function getRoute() {
   const value = window.location.hash.replace(/^#\/?/, "").split("/")[0] || "dashboard";
+  if (value === "threat-map") return "map";
   return validRoutes.has(value) ? value : "dashboard";
 }
 
 export function navigate(route) {
-  const next = validRoutes.has(route) ? route : "dashboard";
+  const target = route === "threat-map" ? "map" : route;
+  const next = validRoutes.has(target) ? target : "dashboard";
   if (getRoute() === next) {
     listeners.forEach((listener) => listener(next));
     return;

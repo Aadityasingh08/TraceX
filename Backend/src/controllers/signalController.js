@@ -8,14 +8,38 @@ import logger from "../utils/logger.js";
 
 export async function getRecords(req, res, next) {
   try {
-    const result = await pool.query(
-      `SELECT id, entity_id AS "entityId", source_id AS "sourceId",
-              source AS "sourceLabel",
-              type, title, snippet, timestamp,
-              COALESCE(confidence, 0) AS confidence,
-              topic
-       FROM signals`
-    );
+    const { search, limit, offset } = req.query;
+    let query = `
+      SELECT id, entity_id AS "entityId", source_id AS "sourceId",
+             source AS "sourceLabel",
+             type, title, snippet, timestamp,
+             COALESCE(confidence, 0) AS confidence,
+             topic,
+             person_name AS "personName",
+             telegram_handle AS "telegramHandle",
+             phone,
+             email,
+             location,
+             wallet_address AS "walletAddress"
+      FROM signals
+    `;
+    const params = [];
+    if (search) {
+      params.push(`%${search}%`);
+      query += ` WHERE title ILIKE $1 OR snippet ILIKE $1 OR source ILIKE $1 OR person_name ILIKE $1 OR phone ILIKE $1 OR telegram_handle ILIKE $1 OR email ILIKE $1 OR location ILIKE $1 OR wallet_address ILIKE $1`;
+    }
+    query += ` ORDER BY timestamp DESC`;
+
+    if (limit) {
+      params.push(parseInt(limit, 10));
+      query += ` LIMIT $${params.length}`;
+      if (offset) {
+        params.push(parseInt(offset, 10));
+        query += ` OFFSET $${params.length}`;
+      }
+    }
+
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) { next(err); }
 }

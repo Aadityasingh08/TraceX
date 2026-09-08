@@ -4,14 +4,54 @@ import { findPotentialMatches } from "../services/entityResolutionService.js";
 
 export async function getEntities(req, res, next) {
   try {
-    const result = await pool.query(
-      `SELECT id, name, type, aliases, sources, priority,
+    const { investigationId, type, search, limit, offset } = req.query;
+    let query = `
+      SELECT id, name, type, aliases, sources, priority,
               first_observed AS "firstObserved",
               last_observed AS "lastObserved",
               activity, community,
-              COALESCE(description, '') AS description
-       FROM entities`
-    );
+              COALESCE(description, '') AS description,
+              COALESCE(display_name, name) AS "displayName",
+              person_name AS "personName",
+              telegram_handle AS "telegramHandle",
+              phone,
+              email,
+              location,
+              wallet_address AS "walletAddress"
+       FROM entities
+    `;
+    const conditions = [];
+    const params = [];
+
+    if (investigationId) {
+      params.push(parseInt(investigationId, 10));
+      conditions.push(`investigation_id = $${params.length}`);
+    }
+    if (type) {
+      params.push(type.toUpperCase());
+      conditions.push(`type = $${params.length}`);
+    }
+    if (search) {
+      params.push(`%${search}%`);
+      conditions.push(`(name ILIKE $${params.length} OR description ILIKE $${params.length} OR display_name ILIKE $${params.length} OR person_name ILIKE $${params.length} OR phone ILIKE $${params.length} OR telegram_handle ILIKE $${params.length} OR email ILIKE $${params.length} OR location ILIKE $${params.length} OR wallet_address ILIKE $${params.length})`);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(" AND ")}`;
+    }
+
+    query += ` ORDER BY id ASC`;
+
+    if (limit) {
+      params.push(parseInt(limit, 10));
+      query += ` LIMIT $${params.length}`;
+      if (offset) {
+        params.push(parseInt(offset, 10));
+        query += ` OFFSET $${params.length}`;
+      }
+    }
+
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) { next(err); }
 }
@@ -23,7 +63,14 @@ export async function getEntity(req, res, next) {
               first_observed AS "firstObserved",
               last_observed AS "lastObserved",
               activity, community,
-              COALESCE(description, '') AS description
+              COALESCE(description, '') AS description,
+              COALESCE(display_name, name) AS "displayName",
+              person_name AS "personName",
+              telegram_handle AS "telegramHandle",
+              phone,
+              email,
+              location,
+              wallet_address AS "walletAddress"
        FROM entities WHERE id = $1`,
       [req.params.id]
     );

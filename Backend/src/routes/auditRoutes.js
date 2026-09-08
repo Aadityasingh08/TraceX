@@ -4,8 +4,7 @@ import { getAuditLogs } from "../controllers/auditController.js";
 
 const router = express.Router();
 
-// Only admins/supervisors can view the audit trail — analysts shouldn't be able
-// to inspect or clear the log of who-did-what.
-router.get("/", protect, requireRole("admin", "supervisor"), getAuditLogs);
+// Allow all authenticated users (analysts, supervisors, admins, etc.) to view the audit trail
+router.get("/", protect, getAuditLogs);
 
 export default router;

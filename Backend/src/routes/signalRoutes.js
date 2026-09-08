@@ -11,16 +11,17 @@ import {
   submitRecord,
   uploadRecord,
 } from "../controllers/signalController.js";
+import { validateSubmitRecord, validateReviewCandidate } from "../middleware/validateRequest.js";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const router = express.Router();
 
 router.get("/", getRecords);
-router.post("/submit", protect, auditLog("SUBMIT_RECORD", "signal"), submitRecord);
+router.post("/submit", protect, validateSubmitRecord, auditLog("SUBMIT_RECORD", "signal"), submitRecord);
 router.post("/upload", protect, upload.single("file"), auditLog("UPLOAD_RECORD", "signal"), uploadRecord);
 router.post("/:id/analyze", protect, auditLog("ANALYZE", "signal"), analyzeRecord);
 router.get("/:id/candidates", getRecordCandidates);
-router.patch("/candidates/:candidateId", protect, auditLog("REVIEW_CANDIDATE", "signal_candidate"), reviewCandidate);
+router.patch("/candidates/:candidateId", protect, validateReviewCandidate, auditLog("REVIEW_CANDIDATE", "signal_candidate"), reviewCandidate);
 
 export default router;

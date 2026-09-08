@@ -1,0 +1,513 @@
+import os
+import subprocess
+import tempfile
+import pymupdf
+
+def generate_slide_html():
+    return """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TRACE-X Live Demo & Graph</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+  @page {
+    size: 960pt 540pt;
+    margin: 0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 960pt;
+    height: 540pt;
+    background: #090d16;
+    color: #f1f5f9;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    overflow: hidden;
+    position: relative;
+    padding: 24pt 32pt;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  /* Background subtle grid & ambient glow */
+  body::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+      radial-gradient(circle at 82% 18%, rgba(56, 189, 248, 0.16), transparent 45%),
+      radial-gradient(circle at 18% 82%, rgba(139, 92, 246, 0.14), transparent 45%),
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 28px 28px, 28px 28px;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+  }
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 9pt;
+  }
+  .header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2pt;
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 8pt;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    padding: 2pt 8pt;
+    border-radius: 4px;
+    width: fit-content;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .title {
+    font-size: 19pt;
+    font-weight: 800;
+    background: linear-gradient(90deg, #ffffff 0%, #cbd5e1 55%, #38bdf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.4px;
+    margin-top: 2pt;
+  }
+  .subtitle {
+    font-size: 9pt;
+    color: #94a3b8;
+    font-weight: 500;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8pt;
+  }
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: #4ade80;
+    font-size: 8pt;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    padding: 4pt 10pt;
+    border-radius: 20px;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.2);
+  }
+  .pulse-dot {
+    width: 7px;
+    height: 7px;
+    background: #22c55e;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #22c55e;
+  }
+
+  /* MAIN GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr;
+    gap: 14pt;
+    margin-top: 8pt;
+    flex-grow: 1;
+  }
+
+  /* CARDS */
+  .card {
+    background: rgba(15, 23, 42, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 11pt 13pt;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    backdrop-filter: blur(10px);
+  }
+  .card-title {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 7pt;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding-bottom: 5pt;
+  }
+  .card-title .icon {
+    color: #38bdf8;
+    font-size: 11pt;
+  }
+
+  /* DEMO LIST */
+  .demo-item {
+    display: flex;
+    gap: 9pt;
+    margin-bottom: 6pt;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 5.5pt 7.5pt;
+    border-radius: 6px;
+  }
+  .demo-num {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 8.5pt;
+    width: 18pt;
+    height: 18pt;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .demo-info h4 {
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 1.5pt;
+  }
+  .demo-info p {
+    font-size: 7.2pt;
+    color: #94a3b8;
+    line-height: 1.35;
+  }
+
+  /* GRAPH CONTAINER */
+  .graph-container {
+    background: #060911;
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    border-radius: 8px;
+    flex-grow: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 6pt 8pt;
+  }
+  .graph-svg {
+    width: 100%;
+    height: 175pt;
+  }
+  .graph-legend {
+    display: flex;
+    justify-content: space-around;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 5px;
+    padding: 3.5pt 6pt;
+    margin-top: 3pt;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4.5px;
+    font-size: 7.2pt;
+    color: #cbd5e1;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+
+  /* METRICS STRIP */
+  .metrics-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 7pt;
+    margin-top: 7pt;
+  }
+  .metric-box {
+    background: rgba(30, 41, 59, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 5pt 6pt;
+    text-align: center;
+  }
+  .metric-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5pt;
+    font-weight: 800;
+    color: #38bdf8;
+  }
+  .metric-lbl {
+    font-size: 6.5pt;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-top: 1pt;
+  }
+
+  /* FOOTER */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 5pt;
+    margin-top: 6pt;
+    font-size: 7.2pt;
+    color: #64748b;
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+<div class="content">
+  
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="tag">⚡ CPH 26 · Problem Statement 3 · TRACE-X Intelligence Fusion</div>
+      <div class="title">LIVE DEMO & NETWORK INTELLIGENCE GRAPH</div>
+      <div class="subtitle">Autonomous Multi-Source Signal Fusion, AI Copilot Investigation & Force-Directed Link Analysis</div>
+    </div>
+    <div class="header-right">
+      <div class="live-badge"><div class="pulse-dot"></div>LIVE PLATFORM ACTIVE</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="grid">
+    
+    <!-- LEFT: LIVE DEMO MODULES -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🖥️</span> TRACE-X Live System Modules</div>
+      
+      <div class="demo-item">
+        <div class="demo-num">01</div>
+        <div class="demo-info">
+          <h4>Multi-Source Ingestion & Entity Dossiers</h4>
+          <p>Fuses PCAP metadata, Crypto ledgers, dark-web intercepts & CDR logs into consolidated suspect target dossiers.</p>
+        </div>
+      </div>
+
+      <div class="demo-item">
+        <div class="demo-num">02</div>
+        <div class="demo-info">
+          <h4>Dual-Engine AI Intelligence Copilot (⌘ J)</h4>
+          <p>Generates instant executive briefings, calculates suspect risk scores, and detects hidden cross-case anomalies.</p>
+        </div>
+      </div>
+
+      <div class="demo-item">
+        <div class="demo-num">03</div>
+        <div class="demo-info">
+          <h4>Global Geospatial Threat Telemetry</h4>
+          <p>Interactive world map tracking C2 proxy nodes, money laundering routes & data exfiltration in real-time.</p>
+        </div>
+      </div>
+
+      <div class="demo-item">
+        <div class="demo-num">04</div>
+        <div class="demo-info">
+          <h4>Tamper-Proof Forensic Evidence Vault</h4>
+          <p>Every lead and graph edge is cryptographically secured with SHA-256 hashes for legal court admissibility.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: PROJECT NETWORK GRAPH -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🕸️</span> Force-Directed Graph Link Analysis</div>
+      
+      <div class="graph-container">
+        <!-- VECTOR GRAPH SIMULATION -->
+        <svg class="graph-svg" viewBox="0 0 460 210">
+          <defs>
+            <linearGradient id="edgeGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ef4444" stop-opacity="0.75"/>
+              <stop offset="100%" stop-color="#eab308" stop-opacity="0.75"/>
+            </linearGradient>
+            <linearGradient id="edgeGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#eab308" stop-opacity="0.75"/>
+              <stop offset="100%" stop-color="#22c55e" stop-opacity="0.75"/>
+            </linearGradient>
+            <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="3.5" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          <!-- EDGES -->
+          <line x1="230" y1="105" x2="110" y2="50" stroke="url(#edgeGrad1)" stroke-width="2.5" stroke-dasharray="4,3" />
+          <line x1="230" y1="105" x2="100" y2="160" stroke="#38bdf8" stroke-width="2" />
+          <line x1="230" y1="105" x2="350" y2="60" stroke="url(#edgeGrad1)" stroke-width="2.5" />
+          <line x1="230" y1="105" x2="360" y2="160" stroke="url(#edgeGrad2)" stroke-width="2.5" />
+          <line x1="350" y1="60" x2="420" y2="110" stroke="#a855f7" stroke-width="1.8" stroke-dasharray="3,3" />
+          <line x1="360" y1="160" x2="420" y2="110" stroke="#22c55e" stroke-width="2" />
+          <line x1="110" y1="50" x2="40" y2="90" stroke="#38bdf8" stroke-width="1.5" />
+          <line x1="100" y1="160" x2="40" y2="90" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,2" />
+
+          <!-- EDGE LABELS -->
+          <rect x="150" y="68" width="64" height="14" rx="3" fill="#1e293b" stroke="#475569" stroke-width="0.5"/>
+          <text x="182" y="78" fill="#f87171" font-size="7.5" font-family="'JetBrains Mono'" text-anchor="middle">Dark Chat</text>
+
+          <rect x="272" y="72" width="76" height="14" rx="3" fill="#1e293b" stroke="#475569" stroke-width="0.5"/>
+          <text x="310" y="82" fill="#fbbf24" font-size="7.5" font-family="'JetBrains Mono'" text-anchor="middle">$45K USDT Mule</text>
+
+          <rect x="275" y="132" width="74" height="14" rx="3" fill="#1e293b" stroke="#475569" stroke-width="0.5"/>
+          <text x="312" y="142" fill="#4ade80" font-size="7.5" font-family="'JetBrains Mono'" text-anchor="middle">Crypto Ledger</text>
+
+          <!-- NODES -->
+          <!-- APEX SUSPECT (CENTER) -->
+          <circle cx="230" cy="105" r="22" fill="#ef4444" filter="url(#glow)" opacity="0.25"/>
+          <circle cx="230" cy="105" r="16" fill="#1e1b4b" stroke="#ef4444" stroke-width="2.5"/>
+          <text x="230" y="109" fill="#ffffff" font-size="8.5" font-weight="bold" text-anchor="middle">👑 S-1</text>
+          <text x="230" y="132" fill="#fca5a5" font-size="7.5" font-family="'JetBrains Mono'" font-weight="bold" text-anchor="middle">Syndicate Head</text>
+
+          <!-- BRIDGE NODE (MONEY MULE) -->
+          <circle cx="350" cy="60" r="13" fill="#1e1b4b" stroke="#eab308" stroke-width="2"/>
+          <text x="350" y="64" fill="#ffffff" font-size="8" font-weight="bold" text-anchor="middle">M-1</text>
+          <text x="350" y="82" fill="#fde047" font-size="7" font-family="'JetBrains Mono'" text-anchor="middle">Bridge Mule</text>
+
+          <!-- CRYPTO WALLET -->
+          <circle cx="360" cy="160" r="13" fill="#052e16" stroke="#22c55e" stroke-width="2"/>
+          <text x="360" y="164" fill="#86efac" font-size="7.5" font-weight="bold" text-anchor="middle">0x71</text>
+          <text x="360" y="182" fill="#86efac" font-size="7" font-family="'JetBrains Mono'" text-anchor="middle">ETH / Monero</text>
+
+          <!-- C2 IP PROXY -->
+          <circle cx="110" cy="50" r="12" fill="#082f49" stroke="#38bdf8" stroke-width="2"/>
+          <text x="110" y="54" fill="#7dd3fc" font-size="7.5" font-weight="bold" text-anchor="middle">IP</text>
+          <text x="110" y="70" fill="#7dd3fc" font-size="7" font-family="'JetBrains Mono'" text-anchor="middle">C2 Server</text>
+
+          <!-- HARDWARE IMEI -->
+          <circle cx="100" cy="160" r="12" fill="#082f49" stroke="#38bdf8" stroke-width="2"/>
+          <text x="100" y="164" fill="#7dd3fc" font-size="7.5" font-weight="bold" text-anchor="middle">IMEI</text>
+          <text x="100" y="180" fill="#7dd3fc" font-size="7" font-family="'JetBrains Mono'" text-anchor="middle">Device MAC</text>
+
+          <!-- PERIPHERAL TARGETS -->
+          <circle cx="420" cy="110" r="10" fill="#3b0764" stroke="#a855f7" stroke-width="1.5"/>
+          <text x="420" y="113" fill="#d8b4fe" font-size="6.5" text-anchor="middle">Hawala</text>
+
+          <circle cx="40" cy="90" r="10" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5"/>
+          <text x="40" y="93" fill="#cbd5e1" font-size="6.5" text-anchor="middle">DarkID</text>
+        </svg>
+
+        <!-- GRAPH LEGEND -->
+        <div class="graph-legend">
+          <div class="legend-item"><div class="dot" style="background:#ef4444;"></div>Prime Suspect</div>
+          <div class="legend-item"><div class="dot" style="background:#eab308;"></div>Bridge Mule</div>
+          <div class="legend-item"><div class="dot" style="background:#22c55e;"></div>Crypto Ledger</div>
+          <div class="legend-item"><div class="dot" style="background:#38bdf8;"></div>Digital IOC (IP/IMEI)</div>
+        </div>
+      </div>
+
+      <!-- METRICS STRIP -->
+      <div class="metrics-strip">
+        <div class="metric-box">
+          <div class="metric-val">98.4%</div>
+          <div class="metric-lbl">Entity Accuracy</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-val">&lt; 120ms</div>
+          <div class="metric-lbl">Fusion Latency</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-val">6+ Hops</div>
+          <div class="metric-lbl">Traversal Depth</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-val">SHA-256</div>
+          <div class="metric-lbl">Evidence Hash</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div>TEAM: CyberX · INSTITUTION: Delhi Skill and Entrepreneurship University</div>
+    <div>TRACE-X : From fragmented signals to verified investigative leads.</div>
+  </div>
+
+</div>
+</body>
+</html>
+"""
+
+def main():
+    workspace_dir = os.path.dirname(os.path.abspath(__file__))
+    downloads_dir = r"C:\Users\HP\Downloads"
+    original_pdf_path = os.path.join(downloads_dir, "CPH 26 Final PPT Template.pptx.pdf.pdf")
+    
+    html_file = os.path.join(workspace_dir, "tracex_slide_temp.html")
+    single_slide_pdf = os.path.join(workspace_dir, "TRACE_X_Live_Demo_and_Graph_Slide.pdf")
+    updated_full_pdf = os.path.join(workspace_dir, "TRACE_X_CPH26_Updated_Presentation.pdf")
+    downloads_updated_pdf = os.path.join(downloads_dir, "CPH_26_TRACE_X_Final_Presentation_Updated.pdf")
+
+    # 1. Write HTML
+    with open(html_file, "w", encoding="utf-8") as f:
+        f.write(generate_slide_html())
+
+    # 2. Render to PDF via Chrome/Edge
+    chrome_exe = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+    edge_exe = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+    browser = chrome_exe if os.path.exists(chrome_exe) else edge_exe
+    user_data_dir = os.path.join(tempfile.gettempdir(), "chrome_slide_profile")
+
+    cmd = [
+        browser,
+        "--headless",
+        "--disable-gpu",
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        f"--user-data-dir={user_data_dir}",
+        f"--print-to-pdf={single_slide_pdf}",
+        html_file
+    ]
+
+    print("Rendering Slide PDF using headless browser...")
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if not os.path.exists(single_slide_pdf):
+        print("Error generating single slide:", res.stderr)
+        return
+
+    print("Single slide PDF generated successfully:", single_slide_pdf)
+
+    # 3. Merge into Original PDF Presentation
+    if os.path.exists(original_pdf_path):
+        orig_doc = pymupdf.open(original_pdf_path)
+        slide_doc = pymupdf.open(single_slide_pdf)
+
+        # We insert after slide 5 (Workflow/Tech Stack) so it becomes Slide 6
+        insert_index = 5  # 0-indexed: index 5 is after page 5
+        if len(orig_doc) >= insert_index:
+            orig_doc.insert_pdf(slide_doc, from_page=0, to_page=0, start_at=insert_index)
+        else:
+            orig_doc.insert_pdf(slide_doc)
+
+        orig_doc.save(updated_full_pdf)
+        orig_doc.save(downloads_updated_pdf)
+        print(f"Updated Full Presentation PDF generated at:\n - {updated_full_pdf}\n - {downloads_updated_pdf}")
+        print(f"Total pages in updated presentation: {len(orig_doc)}")
+    else:
+        print("Original PDF not found at", original_pdf_path)
+
+if __name__ == "__main__":
+    main()

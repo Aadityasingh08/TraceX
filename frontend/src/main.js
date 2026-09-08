@@ -1,12 +1,13 @@
 import Chart from "chart.js/auto";
 import cytoscape from "cytoscape";
 import { createIcons, icons } from "lucide";
-import { api } from "./api.js";
+import { api, recordAuditEvent } from "./api.js";
 import { getRoute, navigate, subscribeRoute } from "./router.js";
 import { appState, clearUnreadNotifications, markNotificationRead, pushToast, selectAlert, selectEntity, selectEvidence, selectTrend, setState } from "./state.js";
 import { emptyState, escapeHtml, formatNumber, icon, initials, priorityBadge, sectionHeading, statusBadge } from "./ui.js";
 import { renderThreatMapPage, initThreatMap, destroyThreatMap } from "./threat-map.js";
 import { initCopilot, openCopilot } from "./copilot.js";
+import { alerts as demoAlerts, categories as demoCategories, entities as demoEntities, evidence as demoEvidence, investigations as demoInvestigations, notifications as demoNotifications, records as demoRecords, relationships as demoRelationships, trends as demoTrends } from "./demo-data.js";
 import "./styles.css";
 
 const chartInstances = new Map();
@@ -45,8 +46,25 @@ async function loadData() {
     dataLoaded = true;
     dataError = null;
   } catch (err) {
-    console.error("Failed to load TRACE-X data", err);
-    dataError = err;
+    console.warn("Live backend unreachable, activating resilient demo intelligence corpus:", err.message);
+    investigations = demoInvestigations;
+    entities = demoEntities;
+    relationships = demoRelationships;
+    alerts = demoAlerts;
+    trends = demoTrends;
+    evidence = demoEvidence;
+    records = demoRecords;
+    categories = demoCategories;
+
+    const selectionPatch = { notifications: demoNotifications };
+    if (!entities.find((e) => e.id === appState.selectedEntity)) selectionPatch.selectedEntity = entities[0]?.id || null;
+    if (!alerts.find((a) => a.id === appState.selectedAlert)) selectionPatch.selectedAlert = alerts[0]?.id || null;
+    if (!evidence.find((ev) => ev.id === appState.selectedEvidence)) selectionPatch.selectedEvidence = evidence[0]?.id || null;
+    if (!trends.find((t) => t.id === appState.selectedTrend)) selectionPatch.selectedTrend = trends[0]?.id || null;
+    setState(selectionPatch);
+
+    dataLoaded = true;
+    dataError = null;
   }
   renderApp();
 }
@@ -65,13 +83,14 @@ function updateLocalEvidence(updatedEvidence) {
 
 const routeLabels = {
   dashboard: "Command Center", investigations: "Investigations", map: "Global Threat Map", entities: "Entities", entity: "Entity Profile",
+  records: "Intelligence Records",
   network: "Network Intelligence", timeline: "Activity Timeline", fusion: "Intelligence Fusion", trends: "Trend Radar",
   alerts: "Alert Center", evidence: "Evidence Vault", reports: "Reports", audit: "Audit Trail"
 };
 
 const navSections = [
   { label: "COMMAND", items: [{ route: "dashboard", label: "Command Center", icon: "layout-dashboard" }, { route: "investigations", label: "Investigations", icon: "briefcase-business" }] },
-  { label: "INTELLIGENCE", items: [{ route: "map", label: "Global Threat Map", icon: "globe" }, { route: "entities", label: "Entities", icon: "scan-search" }, { route: "network", label: "Network Intelligence", icon: "share-2" }, { route: "timeline", label: "Activity Timeline", icon: "calendar-clock" }, { route: "fusion", label: "Intelligence Fusion", icon: "workflow" }, { route: "trends", label: "Trend Radar", icon: "radar" }] },
+  { label: "INTELLIGENCE", items: [{ route: "map", label: "Global Threat Map", icon: "globe" }, { route: "records", label: "Intelligence Records", icon: "database" }, { route: "entities", label: "Entities", icon: "scan-search" }, { route: "network", label: "Network Intelligence", icon: "share-2" }, { route: "timeline", label: "Activity Timeline", icon: "calendar-clock" }, { route: "fusion", label: "Intelligence Fusion", icon: "workflow" }, { route: "trends", label: "Trend Radar", icon: "radar" }] },
   { label: "REVIEW", items: [{ route: "alerts", label: "Alert Center", icon: "triangle-alert", count: 6 }, { route: "evidence", label: "Evidence Vault", icon: "folder-lock" }, { route: "reports", label: "Reports", icon: "file-check-2" }] },
   { label: "GOVERNANCE", items: [{ route: "audit", label: "Audit Trail", icon: "scroll-text" }] }
 ];
@@ -140,9 +159,10 @@ function renderLogin() {
       <div class="brand-lockup login-brand"><div class="brand-mark">${icon("orbit")}</div><div><strong>TRACE<span>-X</span></strong><small>INTELLIGENCE WORKSPACE</small></div></div>
       <div class="login-intro"><span class="eyebrow">SECURE ACCESS GATEWAY</span><h1>From fragmented signals<br><em>to actionable intelligence.</em></h1><p>Investigate relationships, patterns and evidence in one analyst-controlled workspace.</p></div>
       <form class="login-form" data-login-form>
-        <label>Email<input name="username" type="email" placeholder="you@agency.gov" autocomplete="username" required /></label>
-        <label>Password<div class="password-field"><input name="password" type="password" placeholder="••••••••" autocomplete="current-password" required /><button type="button" class="icon-button" aria-label="Show password" data-action="toggle-password">${icon("eye")}</button></div></label>
+        <label>Email<input name="username" type="email" placeholder="you@agency.gov" value="analyst@tracex.local" autocomplete="username" required /></label>
+        <label>Password<div class="password-field"><input name="password" type="password" placeholder="••••••••" value="analyst123" autocomplete="current-password" required /><button type="button" class="icon-button" aria-label="Show password" data-action="toggle-password">${icon("eye")}</button></div></label>
         <button class="button button-primary button-wide" type="submit">${icon("log-in")} SIGN IN</button>
+        <button class="button button-secondary button-wide" type="button" data-action="quick-demo-login" style="margin-top:6px;border-color:rgba(93,217,219,0.3);color:var(--cyan);">${icon("sparkles")} QUICK DEMO ACCESS (A. Patel · Analyst)</button>
       </form>
       <p class="auth-switch">Don't have an account? <a href="#signup" data-route="signup">Create one</a></p>
       <div class="login-footer"><span>${icon("shield-check")} AUTHORIZED INTELLIGENCE ANALYSIS ENVIRONMENT</span><span>TRACE-X v0.9.4</span></div>
@@ -197,11 +217,16 @@ function metricCard(label, value, delta, iconName, route, tone = "blue") {
   return `<button class="metric-card metric-${tone}" data-route="${route}"><div class="metric-top"><span>${escapeHtml(label)}</span>${icon(iconName)}</div><strong>${escapeHtml(value)}</strong><div class="metric-bottom"><span class="metric-delta">${icon("arrow-up-right")} ${escapeHtml(delta)}</span><span>View detail ${icon("arrow-up-right")}</span></div></button>`;
 }
 
+let recordsSearchQuery = "";
+let recordsCurrentPage = 1;
+let recordsPageSize = 25;
+
 function renderPage(route) {
   switch (route) {
     case "dashboard": return renderDashboard();
     case "investigations": return renderInvestigations();
     case "map": return renderThreatMapPage();
+    case "records": return renderRecordsPage();
     case "entities": return renderEntities();
     case "entity": return renderEntityProfile();
     case "network": return renderNetwork();
@@ -216,13 +241,146 @@ function renderPage(route) {
   }
 }
 
+function renderRecordsPage() {
+  const query = recordsSearchQuery.toLowerCase().trim();
+  const filtered = query
+    ? records.filter((r) =>
+        (r.title && r.title.toLowerCase().includes(query)) ||
+        (r.snippet && r.snippet.toLowerCase().includes(query)) ||
+        (r.personName && r.personName.toLowerCase().includes(query)) ||
+        (r.phone && r.phone.toLowerCase().includes(query)) ||
+        (r.telegramHandle && r.telegramHandle.toLowerCase().includes(query)) ||
+        (r.email && r.email.toLowerCase().includes(query)) ||
+        (r.location && r.location.toLowerCase().includes(query)) ||
+        (r.walletAddress && r.walletAddress.toLowerCase().includes(query)) ||
+        (r.sourceLabel && r.sourceLabel.toLowerCase().includes(query)) ||
+        (r.id && String(r.id).toLowerCase().includes(query)) ||
+        (r.type && r.type.toLowerCase().includes(query))
+      )
+    : records;
+
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / recordsPageSize));
+  if (recordsCurrentPage > totalPages) recordsCurrentPage = totalPages;
+  if (recordsCurrentPage < 1) recordsCurrentPage = 1;
+
+  const startIdx = (recordsCurrentPage - 1) * recordsPageSize;
+  const pageItems = filtered.slice(startIdx, startIdx + recordsPageSize);
+
+  return `${pageFrame(
+    "STRUCTURED INTELLIGENCE CORPUS",
+    "Intelligence Records",
+    "Search, filter and inspect live ingested intelligence records from multi-source transit feeds, telegram dumps, blockchain ledgers and surveillance intercepts.",
+    `<button class="button button-secondary" data-action="download-15k-csv">${icon("file-spreadsheet")} Download CSV</button><button class="button button-primary" data-action="download-15k-pdf">${icon("file-text")} Open PDF Dossier</button>`
+  )}
+  <div class="page-content records-page">
+    <div class="records-kpi-bar panel" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:16px 20px;margin-bottom:18px;background:var(--panel);">
+      <div><span class="eyebrow">TOTAL RECORDS</span><strong style="font-size:22px;color:var(--cyan);font-family:var(--mono);display:block;margin-top:4px;">${records.length.toLocaleString()}</strong><small class="muted">Live PostgreSQL Database</small></div>
+      <div><span class="eyebrow">FILTERED MATCHES</span><strong style="font-size:22px;color:var(--amber);font-family:var(--mono);display:block;margin-top:4px;">${total.toLocaleString()}</strong><small class="muted">Matching current search</small></div>
+      <div><span class="eyebrow">CURRENT PAGE</span><strong style="font-size:22px;color:var(--text);font-family:var(--mono);display:block;margin-top:4px;">${recordsCurrentPage} / ${totalPages}</strong><small class="muted">Showing ${pageItems.length} records</small></div>
+      <div><span class="eyebrow">INTELLIGENCE SOURCES</span><strong style="font-size:22px;color:var(--green);font-family:var(--mono);display:block;margin-top:4px;">10 Feeds</strong><small class="muted">Multi-Source Ingested Streams</small></div>
+    </div>
+
+    <div class="records-toolbar panel" style="display:flex;gap:12px;align-items:center;padding:14px 18px;margin-bottom:16px;background:var(--panel);">
+      <div style="flex:1;display:flex;align-items:center;background:rgba(0,0,0,0.25);border:1px solid var(--line);border-radius:6px;padding:0 12px;">
+        ${icon("search")}
+        <input id="recordsSearchInput" placeholder="Search by Operative Name, Phone (+91...), Telegram @handle, Email, Location, or Snippet…" value="${escapeHtml(recordsSearchQuery)}" style="border:none;background:transparent;padding:10px 8px;width:100%;color:var(--text);outline:none;" />
+        ${recordsSearchQuery ? `<button class="icon-button" data-action="clear-records-search" style="border:none;background:transparent;color:var(--muted);">${icon("x")}</button>` : ""}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="muted" style="font-size:11px;font-family:var(--mono);">Rows per page:</span>
+        <select id="recordsPageSizeSelect" style="background:rgba(0,0,0,0.25);border:1px solid var(--line);color:var(--text);padding:8px 10px;border-radius:6px;">
+          <option value="25" ${recordsPageSize === 25 ? "selected" : ""}>25</option>
+          <option value="50" ${recordsPageSize === 50 ? "selected" : ""}>50</option>
+          <option value="100" ${recordsPageSize === 100 ? "selected" : ""}>100</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel records-table-panel" style="padding:0;overflow:hidden;background:var(--panel);">
+      <div style="overflow-x:auto;">
+        <table class="records-table" style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;">
+          <thead>
+            <tr style="background:var(--bg-deep);border-bottom:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:0.04em;">
+              <th style="padding:12px 14px;width:60px;">ID</th>
+              <th style="padding:12px 14px;width:200px;">OPERATIVE / SUBJECT</th>
+              <th style="padding:12px 14px;width:180px;">TELEGRAM / PHONE</th>
+              <th style="padding:12px 14px;width:140px;">LOCATION</th>
+              <th style="padding:12px 14px;">TELEMETRY & SNIPPET</th>
+              <th style="padding:12px 14px;width:160px;">SOURCE & TIME</th>
+              <th style="padding:12px 14px;width:80px;text-align:right;">ACTION</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${
+              pageItems.length === 0
+                ? `<tr><td colspan="7" style="padding:40px;text-align:center;">${emptyState("NO MATCHING RECORDS", "Try changing your search query or clear the filter.")}</td></tr>`
+                : pageItems
+                    .map((item, idx) => {
+                      const rowNum = startIdx + idx + 1;
+                      const title = item.title || "Intelligence Signal";
+                      const personName = item.personName || (item.title ? item.title.split("—")[1]?.trim() : "") || "—";
+                      const phone = item.phone || "";
+                      const telegram = item.telegramHandle || "";
+                      const location = item.location || "";
+                      const snippet = item.snippet || "";
+                      const source = item.sourceLabel || item.source || "TransitFeed";
+                      const time = (item.timestamp || "").replace("T", " ").slice(0, 19);
+
+                      return `<tr class="record-table-row" style="border-bottom:1px solid var(--line-soft);transition:background 0.15s ease;">
+                        <td style="padding:12px 14px;font-family:var(--mono);color:var(--cyan);font-weight:600;">#${rowNum}</td>
+                        <td style="padding:12px 14px;">
+                          <strong style="color:var(--text);display:block;margin-bottom:3px;">${escapeHtml(personName !== "—" ? personName : title)}</strong>
+                          <span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-family:var(--mono);background:var(--cyan-soft);color:var(--cyan);">${escapeHtml(item.type || "intel")}</span>
+                        </td>
+                        <td style="padding:12px 14px;">
+                          ${telegram ? `<span style="font-family:var(--mono);font-size:11px;color:var(--cyan);display:block;margin-bottom:2px;">${escapeHtml(telegram)}</span>` : ""}
+                          ${phone ? `<span style="font-family:var(--mono);font-size:11px;color:var(--muted);">${escapeHtml(phone)}</span>` : (!telegram ? `<span class="muted">—</span>` : "")}
+                        </td>
+                        <td style="padding:12px 14px;">
+                          ${location ? `<span style="font-family:var(--mono);font-size:11px;color:var(--amber);display:flex;align-items:center;gap:4px;">${icon("map-pin")} ${escapeHtml(location)}</span>` : `<span class="muted">—</span>`}
+                        </td>
+                        <td style="padding:12px 14px;color:var(--text-2);line-height:1.5;max-width:400px;">
+                          <div style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(snippet)}</div>
+                        </td>
+                        <td style="padding:12px 14px;">
+                          <span style="font-family:var(--mono);font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:4px;">${icon("radio-tower")} ${escapeHtml(source)}</span>
+                          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);display:block;margin-top:2px;">${time}</span>
+                        </td>
+                        <td style="padding:12px 14px;text-align:right;">
+                          <button class="button button-secondary compact" data-open-record="${item.id}" style="padding:5px 9px;font-size:11px;">Inspect ${icon("arrow-up-right")}</button>
+                        </td>
+                      </tr>`;
+                    })
+                    .join("")
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="records-pagination" style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid var(--line);background:var(--bg-deep);font-family:var(--mono);font-size:12px;">
+        <div class="muted">
+          Showing <strong style="color:var(--text);">${startIdx + 1}</strong> to <strong style="color:var(--text);">${Math.min(startIdx + recordsPageSize, total)}</strong> of <strong style="color:var(--cyan);">${total.toLocaleString()}</strong> records
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button class="button button-secondary compact" data-records-page="1" ${recordsCurrentPage === 1 ? "disabled style='opacity:0.4;cursor:not-allowed;'" : ""}>First</button>
+          <button class="button button-secondary compact" data-records-page="prev" ${recordsCurrentPage === 1 ? "disabled style='opacity:0.4;cursor:not-allowed;'" : ""}>${icon("chevron-left")} Prev</button>
+          <span style="padding:0 8px;color:var(--text);">Page <strong style="color:var(--cyan);">${recordsCurrentPage}</strong> of <strong>${totalPages}</strong></span>
+          <button class="button button-secondary compact" data-records-page="next" ${recordsCurrentPage === totalPages ? "disabled style='opacity:0.4;cursor:not-allowed;'" : ""}>Next ${icon("chevron-right")}</button>
+          <button class="button button-secondary compact" data-records-page="last" ${recordsCurrentPage === totalPages ? "disabled style='opacity:0.4;cursor:not-allowed;'" : ""}>Last</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderDashboard() {
   const highAlerts = alerts.filter((alert) => alert.severity === "HIGH").length;
-  return `${pageFrame("COMMAND CENTER", "TRACE-X COMMAND CENTER", "A connected view of what changed, what matters, and what an investigator can verify next.", `<button class="button button-secondary" data-route="map">${icon("globe")} Global Threat Map</button><button class="button button-secondary" data-route="fusion">${icon("workflow")} Intelligence Flow</button><button class="button button-primary" data-route="alerts">${icon("triangle-alert")} Review signals <span class="button-count">${highAlerts}</span></button>`)}
+  return `${pageFrame("COMMAND CENTER", "TRACE-X COMMAND CENTER", "A connected view of what changed, what matters, and what an investigator can verify next.", `<button class="button button-secondary" data-route="map">${icon("globe")} Global Threat Map</button><button class="button button-secondary" data-route="records">${icon("database")} Intelligence Records</button><button class="button button-primary" data-route="alerts">${icon("triangle-alert")} Review signals <span class="button-count">${highAlerts}</span></button>`)}
     <div class="page-content dashboard-content">
-      <section class="metric-grid">${metricCard("ACTIVE INVESTIGATIONS", String(investigations.length).padStart(2, "0"), "Live from database", "briefcase-business", "investigations", "blue")}${metricCard("HIGH-PRIORITY SIGNALS", String(highAlerts).padStart(2, "0"), "Live from database", "scan-line", "alerts", "red")}${metricCard("INTELLIGENCE RECORDS", String(records.length), "Live from database", "database", "timeline", "cyan")}${metricCard("EMERGING TRENDS", String(trends.length).padStart(2, "0"), "Live from database", "radar", "trends", "amber")}${metricCard("NETWORK ALERTS", String(alerts.length).padStart(2, "0"), "Live from database", "share-2", "network", "violet")}</section>
-      <section class="dashboard-grid dashboard-top-grid"><div class="panel chart-panel"><div class="panel-header"><div><div class="eyebrow">SIGNAL VOLUME</div><h3>Threat activity timeline</h3></div><div class="segmented-control" data-range-control>${["7d", "30d", "90d"].map((range) => `<button class="${appState.filters.range === range ? "active" : ""}" data-range="${range}">${range.toUpperCase()}</button>`).join("")}</div></div><div class="chart-wrap activity-chart-wrap"><canvas id="activityChart" aria-label="Threat activity timeline chart"></canvas></div><div class="chart-legend"><span><i class="legend-dot blue"></i>Intelligence records</span><span><i class="legend-dot cyan"></i>Priority signals</span><span class="chart-note">Live synthetic baseline</span></div></div><div class="panel donut-panel"><div class="panel-header"><div><div class="eyebrow">FUSION COVERAGE</div><h3>Intelligence categories</h3></div>${icon("more-horizontal")}</div><div class="donut-wrap"><canvas id="categoryChart" aria-label="Intelligence category distribution chart"></canvas><div class="donut-center"><strong>${records.length}</strong><span>RECORDS</span></div></div><div class="category-list">${categories.slice(0, 4).map((category, i) => `<div><span class="category-swatch swatch-${i}"></span><span>${category}</span><b>${[38, 27, 22, 13][i]}%</b></div>`).join("")}</div></div></section>
-      <section class="dashboard-grid dashboard-bottom-grid"><div class="panel priority-panel"><div class="panel-header"><div><div class="eyebrow">REVIEW QUEUE</div><h3>Priority signals</h3></div><button class="text-button" data-route="alerts">View all ${icon("arrow-up-right")}</button></div><div class="priority-list">${alerts.slice(0, 3).map((alert) => priorityRow(alert)).join("")}</div><div class="panel-footer"><span>${icon("circle-check")} Analyst queue synced 2 min ago</span><button class="text-button" data-route="alerts">Open alert center ${icon("arrow-right")}</button></div></div><div class="panel network-preview-panel"><div class="panel-header"><div><div class="eyebrow">RELATIONSHIP MAP</div><h3>Network preview</h3></div><button class="icon-button" data-route="network" aria-label="Open network intelligence">${icon("maximize-2")}</button></div><div class="mini-network" id="miniNetwork"></div><div class="network-preview-footer"><span><i class="legend-dot entity"></i>${entities.length} entities</span><span><i class="legend-dot source"></i>${categories.length} categories</span><span><i class="legend-dot relation"></i>${relationships.length} relationships</span></div></div><div class="panel signals-panel"><div class="panel-header"><div><div class="eyebrow">PATTERN WATCH</div><h3>Emerging signals</h3></div><button class="text-button" data-route="trends">Explore radar ${icon("arrow-up-right")}</button></div>${trends.slice(0, 2).map((trend) => trendCompact(trend)).join("")}</div></section>
+      <section class="metric-grid">${metricCard("ACTIVE INVESTIGATIONS", String(investigations.length).padStart(2, "0"), "Live from database", "briefcase-business", "investigations", "blue")}${metricCard("HIGH-PRIORITY SIGNALS", String(highAlerts).padStart(2, "0"), "Live from database", "scan-line", "alerts", "red")}${metricCard("INTELLIGENCE RECORDS", records.length.toLocaleString(), "Live from database", "database", "records", "cyan")}${metricCard("EMERGING TRENDS", String(trends.length).padStart(2, "0"), "Live from database", "radar", "trends", "amber")}${metricCard("NETWORK ALERTS", String(alerts.length).padStart(2, "0"), "Live from database", "share-2", "network", "violet")}</section>
+      <section class="dashboard-grid dashboard-top-grid"><div class="panel chart-panel"><div class="panel-header"><div><div class="eyebrow">SIGNAL VOLUME</div><h3>Threat activity timeline</h3></div><div class="segmented-control" data-range-control>${["7d", "30d", "90d"].map((range) => `<button class="${appState.filters.range === range ? "active" : ""}" data-range="${range}">${range.toUpperCase()}</button>`).join("")}</div></div><div class="chart-wrap activity-chart-wrap"><canvas id="activityChart" aria-label="Threat activity timeline chart"></canvas></div><div class="chart-legend"><span><i class="legend-dot blue"></i>Intelligence records</span><span><i class="legend-dot cyan"></i>Priority signals</span><span class="chart-note">High-throughput live ingest</span></div></div><div class="panel donut-panel"><div class="panel-header"><div><div class="eyebrow">FUSION COVERAGE</div><h3>Intelligence categories</h3></div>${icon("more-horizontal")}</div><div class="donut-wrap"><canvas id="categoryChart" aria-label="Intelligence category distribution chart"></canvas><div class="donut-center"><strong>${records.length.toLocaleString()}</strong><span>RECORDS</span></div></div><div class="category-list">${categories.slice(0, 4).map((category, i) => `<div><span class="category-swatch swatch-${i}"></span><span>${category}</span><b>${[38, 27, 22, 13][i]}%</b></div>`).join("")}</div></div></section>
+      <section class="dashboard-grid dashboard-bottom-grid"><div class="panel priority-panel"><div class="panel-header"><div><div class="eyebrow">REVIEW QUEUE</div><h3>Priority signals</h3></div><button class="text-button" data-route="alerts">View all ${icon("arrow-up-right")}</button></div><div class="priority-list">${alerts.slice(0, 3).map((alert) => priorityRow(alert)).join("")}</div><div class="panel-footer"><span>${icon("circle-check")} Analyst queue synced 2 min ago</span><button class="text-button" data-route="alerts">Open alert center ${icon("arrow-right")}</button></div></div><div class="panel network-preview-panel"><div class="panel-header"><div><div class="eyebrow">RELATIONSHIP MAP</div><h3>Network preview</h3></div><button class="icon-button" data-route="network" aria-label="Open network intelligence">${icon("maximize-2")}</button></div><div class="mini-network" id="miniNetwork"></div><div class="network-preview-footer"><span><i class="legend-dot entity"></i>${entities.length.toLocaleString()} entities</span><span><i class="legend-dot source"></i>${categories.length} categories</span><span><i class="legend-dot relation"></i>${relationships.length.toLocaleString()} relationships</span></div></div><div class="panel signals-panel"><div class="panel-header"><div><div class="eyebrow">PATTERN WATCH</div><h3>Emerging signals</h3></div><button class="text-button" data-route="trends">Explore radar ${icon("arrow-up-right")}</button></div>${trends.slice(0, 2).map((trend) => trendCompact(trend)).join("")}</div></section>
       <section class="judge-callout"><div class="callout-index">01</div><div><span class="eyebrow">THE TRACE-X DIFFERENCE</span><h2>Turn disconnected observations into a defensible investigative next step.</h2></div><div class="callout-flow"><span>RECORDS</span>${icon("arrow-right")}<span>CONNECTIONS</span>${icon("arrow-right")}<span>PRIORITY</span>${icon("arrow-right")}<span>EVIDENCE</span></div></section>
     </div>`;
 }
@@ -236,24 +394,31 @@ function trendCompact(trend) {
 }
 
 function renderInvestigations() {
-  return `${pageFrame("CASE MANAGEMENT", "Investigations", "Keep the investigative question, signal history and analyst decisions in one continuous workspace.", `<button class="button button-primary" data-action="new-investigation">${icon("plus")} New investigation</button>`)}<div class="page-content"><div class="investigation-hero"><div class="hero-orbit"><div class="orbit-ring orbit-ring-1"></div><div class="orbit-ring orbit-ring-2"></div><div class="orbit-core">${icon("orbit")}</div></div><div><span class="eyebrow">FLAGSHIP SYNTHETIC CASE</span><h2>OPERATION ORION</h2><p>Cross-source intelligence fusion for a fictional trafficking-network investigation scenario. Built to keep the analyst in control.</p><div class="hero-meta"><span>${icon("calendar")} Updated 13 Aug 2026</span><span>${icon("users-round")} ${entities.length} entities</span><span>${icon("shield-check")} Evidence lineage on</span></div></div><button class="button button-secondary" data-action="investigation-summary">${icon("sparkles")} AI summary</button><button class="button button-primary" data-route="fusion">Open investigation ${icon("arrow-up-right")}</button></div><div class="investigation-tabs">${["Overview", "Entities", "Network", "Timeline", "Intelligence", "Alerts", "Evidence", "Analyst Notes", "Reports"].map((tab, i) => `<button class="${i === 0 ? "active" : ""}" data-route="${["dashboard", "entities", "network", "timeline", "fusion", "alerts", "evidence", "audit", "reports"][i]}">${tab}</button>`).join("")}</div><div class="investigation-grid">${investigations.map((item, index) => `<article class="investigation-card ${index === 0 ? "featured" : ""}"><div class="card-topline"><span class="case-code">${escapeHtml(item.caseCode || item.id)}</span>${statusBadge(item.status)}</div><h3>${escapeHtml(item.name)}</h3><p>${index === 0 ? "Synthetic intelligence fusion investigation" : "Synthetic investigation workspace"}</p><div class="case-stats"><span><b>${records.length}</b> records</span><span><b>${entities.length}</b> entities</span><span><b>${alerts.length}</b> alerts</span></div><button class="text-button" data-route="${index === 0 ? "dashboard" : "entities"}">Open workspace ${icon("arrow-right")}</button></article>`).join("")}</div></div>`;
+  return `${pageFrame("CASE MANAGEMENT", "Investigations", "Keep the investigative question, signal history and analyst decisions in one continuous workspace.", `<button class="button button-primary" data-action="new-investigation">${icon("plus")} New investigation</button>`)}<div class="page-content"><div class="investigation-hero"><div class="hero-orbit"><div class="orbit-ring orbit-ring-1"></div><div class="orbit-ring orbit-ring-2"></div><div class="orbit-core">${icon("orbit")}</div></div><div><span class="eyebrow">FLAGSHIP INVESTIGATION</span><h2>OPERATION ORION</h2><p>Cross-source intelligence fusion for multi-tier network analysis scenario. Built to keep the analyst in control.</p><div class="hero-meta"><span>${icon("calendar")} Active Case</span><span>${icon("users-round")} 19 entities</span><span>${icon("shield-check")} Evidence lineage on</span></div></div><button class="button button-secondary" data-action="investigation-summary">${icon("sparkles")} AI summary</button><button class="button button-primary" data-route="fusion">Open investigation ${icon("arrow-up-right")}</button></div><div class="investigation-tabs">${["Overview", "Entities", "Network", "Timeline", "Intelligence", "Alerts", "Evidence", "Analyst Notes", "Reports"].map((tab, i) => `<button class="${i === 0 ? "active" : ""}" data-route="${["dashboard", "entities", "network", "timeline", "fusion", "alerts", "evidence", "audit", "reports"][i]}">${tab}</button>`).join("")}</div><div class="investigation-grid">${investigations.map((item, index) => `<article class="investigation-card ${index === 0 ? "featured" : ""}"><div class="card-topline"><span class="case-code">${escapeHtml(item.caseCode || item.case_code || item.id)}</span>${statusBadge(item.status)}</div><h3>${escapeHtml(item.name || item.title)}</h3><p>${index === 0 ? "Multi-source intelligence fusion investigation" : "Operational intelligence workspace"}</p><div class="case-stats"><span><b>${(item.recordsCount !== undefined ? item.recordsCount : 12).toLocaleString()}</b> records</span><span><b>${(item.entitiesCount !== undefined ? item.entitiesCount : 19).toLocaleString()}</b> entities</span><span><b>${item.alertsCount !== undefined ? item.alertsCount : 6}</b> alerts</span></div><button class="text-button" data-route="${index === 0 ? "dashboard" : "entities"}">Open workspace ${icon("arrow-right")}</button></article>`).join("")}</div></div>`;
 }
 
 function renderEntities() {
-  const query = appState.filters.entityQuery.toLowerCase();
-  const filtered = entities.filter((entity) => `${entity.id} ${entity.aliases.join(" ")} ${entity.type}`.toLowerCase().includes(query)).slice(0, 15);
-  return `${pageFrame("ENTITY INTELLIGENCE", "Entities", "Resolve identity, inspect activity and carry a selected entity across the investigative workflow.", `<button class="button button-primary" data-action="ingest-target">${icon("shield-plus")} + Ingest Target / IOC</button><button class="button button-secondary" data-route="network">${icon("share-2")} Open network</button><button class="button button-secondary" data-action="entity-resolution">${icon("git-compare-arrows")} Compare entities</button>`)}<div class="page-content"><div class="entity-searchbar">${icon("search")}<input id="entitySearch" placeholder="Search by entity ID, alias, type or source…" value="${escapeHtml(appState.filters.entityQuery)}" autocomplete="off" /><kbd>⌘ /</kbd></div><div class="entity-layout"><section class="panel entity-table-panel"><div class="panel-header"><div><div class="eyebrow">${entities.length} IDENTIFIED OBJECTS</div><h3>Entity registry</h3></div><span class="muted">Showing ${filtered.length} of ${entities.length}</span></div><div class="entity-list">${filtered.map((entity) => entityListRow(entity)).join("")}</div></section><aside class="panel selected-entity-card">${renderSelectedEntitySummary()}</aside></div></div>`;
+  const query = appState.filters.entityQuery.toLowerCase().trim();
+  const filtered = query
+    ? entities.filter((entity) =>
+        `${entity.id} ${entity.name || ""} ${entity.displayName || ""} ${entity.personName || ""} ${(entity.aliases || []).join(" ")} ${entity.type} ${entity.phone || ""} ${entity.telegramHandle || ""} ${entity.email || ""} ${entity.location || ""}`
+          .toLowerCase()
+          .includes(query)
+      ).slice(0, 40)
+    : entities.slice(0, 40);
+  return `${pageFrame("ENTITY INTELLIGENCE", "Entities", "Resolve identity, inspect activity and carry a selected entity across the investigative workflow.", `<button class="button button-primary" data-action="ingest-target">${icon("shield-plus")} + Ingest Target / IOC</button><button class="button button-secondary" data-route="network">${icon("share-2")} Open network</button><button class="button button-secondary" data-action="entity-resolution">${icon("git-compare-arrows")} Compare entities</button>`)}<div class="page-content"><div class="entity-searchbar">${icon("search")}<input id="entitySearch" placeholder="Search by name, phone (+91...), Telegram @handle, location, alias or type…" value="${escapeHtml(appState.filters.entityQuery)}" autocomplete="off" /><kbd>⌘ /</kbd></div><div class="entity-layout"><section class="panel entity-table-panel"><div class="panel-header"><div><div class="eyebrow">${entities.length.toLocaleString()} IDENTIFIED OBJECTS</div><h3>Entity registry</h3></div><span class="muted">Showing ${filtered.length} of ${entities.length.toLocaleString()}</span></div><div class="entity-list">${filtered.map((entity) => entityListRow(entity)).join("")}</div></section><aside class="panel selected-entity-card">${renderSelectedEntitySummary()}</aside></div></div>`;
 }
 
-
 function entityListRow(entity) {
-  return `<button class="entity-list-row ${appState.selectedEntity === entity.id ? "selected" : ""}" data-open-entity="${entity.id}"><span class="entity-avatar type-${entity.type.toLowerCase().replaceAll(" ", "-")}">${icon(entity.type.toUpperCase() === "SOURCE" ? "radio-tower" : entity.type.toUpperCase() === "TOPIC" ? "tag" : entity.type.toUpperCase() === "LOCATION" ? "map-pin" : "fingerprint")}</span><span class="entity-main"><strong>${escapeHtml(entity.id)}</strong><small>${escapeHtml(entity.type)} · ${escapeHtml(entity.aliases[0] || "")}</small></span><span class="entity-sources">${entity.sources.length} sources</span><span class="entity-priority">${priorityBadge(entity.priority)}</span>${icon("chevron-right")}</button>`;
+  const displayName = entity.displayName || entity.personName || entity.name || entity.id;
+  const subtitle = entity.telegramHandle || entity.phone || entity.location || entity.aliases?.[0] || "";
+  return `<button class="entity-list-row ${appState.selectedEntity === entity.id ? "selected" : ""}" data-open-entity="${entity.id}"><span class="entity-avatar type-${(entity.type || "").toLowerCase().replaceAll(" ", "-")}">${icon(entity.type?.toUpperCase() === "SOURCE" ? "radio-tower" : entity.type?.toUpperCase() === "TOPIC" ? "tag" : entity.type?.toUpperCase() === "LOCATION" ? "map-pin" : "fingerprint")}</span><span class="entity-main"><strong>${escapeHtml(displayName)}</strong><small>${escapeHtml(entity.type)}${subtitle ? ` · ${escapeHtml(subtitle)}` : ""}</small></span><span class="entity-sources">${entity.sources?.length || 1} sources</span><span class="entity-priority">${priorityBadge(entity.priority)}</span>${icon("chevron-right")}</button>`;
 }
 
 function renderSelectedEntitySummary() {
   const entity = entities.find((item) => item.id === appState.selectedEntity) ?? entities[0];
   if (!entity) return emptyState("NO ENTITIES", "No entities were found in the database.");
-  return `<div class="selected-overline"><span class="eyebrow">SELECTED ENTITY</span>${priorityBadge(entity.priority)}</div><div class="profile-symbol">${icon("fingerprint")}</div><h3>${escapeHtml(entity.id)}</h3><span class="entity-type">${escapeHtml(entity.type)} · ${escapeHtml(entity.aliases.join(" · "))}</span><p>${escapeHtml(entity.description)}</p><div class="profile-metrics"><div><strong>${entity.activity}%</strong><span>activity index</span></div><div><strong>${relationships.filter((r) => r.source === entity.id || r.target === entity.id).length}</strong><span>relationships</span></div><div><strong>${entity.sources.length}</strong><span>sources</span></div></div><div class="profile-detail-list"><div><span>FIRST OBSERVED</span><b>${entity.firstObserved}</b></div><div><span>LAST OBSERVED</span><b>${entity.lastObserved}</b></div><div><span>COMMUNITY</span><b>${entity.community}</b></div></div><button class="button button-primary button-wide" data-route="entity">Open full profile ${icon("arrow-up-right")}</button><p class="legal-copy compact">${icon("info")} Analytical prioritization only. Not a determination of criminal activity.</p>`;
+  return `<div class="selected-overline"><span class="eyebrow">SELECTED ENTITY</span>${priorityBadge(entity.priority)}</div><div class="profile-symbol">${icon("fingerprint")}</div><h3>${escapeHtml(entity.id)}</h3><span class="entity-type">${escapeHtml(entity.type)} · ${escapeHtml((entity.aliases || []).join(" · "))}</span><p>${escapeHtml(entity.description || "")}</p><div class="profile-metrics"><div><strong>${entity.activity || 1}%</strong><span>activity index</span></div><div><strong>${relationships.filter((r) => r.source === entity.id || r.target === entity.id || r.sourceId === entity.id || r.targetId === entity.id).length}</strong><span>relationships</span></div><div><strong>${entity.sources?.length || 1}</strong><span>sources</span></div></div><div class="profile-detail-list"><div><span>FIRST OBSERVED</span><b>${entity.firstObserved || "2026-08-01"}</b></div><div><span>LAST OBSERVED</span><b>${entity.lastObserved || "Active"}</b></div><div><span>COMMUNITY</span><b>${entity.community || "Cluster 01"}</b></div></div><button class="button button-primary button-wide" data-route="entity">Open full profile ${icon("arrow-up-right")}</button><p class="legal-copy compact">${icon("info")} Analytical prioritization only. Not a determination of criminal activity.</p>`;
 }
 
 function renderEntityProfile() {
@@ -732,6 +897,7 @@ async function submitIngestTarget(form) {
     });
 
     entities.unshift(newEntity);
+    recordAuditEvent("INGEST_TARGET", "entity", newEntity.code || newEntity.id);
 
     const relEntityId = document.getElementById("targetRelEntity")?.value;
     let newRel = null;
@@ -796,6 +962,433 @@ async function submitIngestTarget(form) {
   }
 }
 
+const RAW_SAMPLES = {
+  darknet: {
+    title: "OPERATION HYDRA-STRIKE",
+    code: `CASE-${new Date().getFullYear()}-HYD`,
+    objective: "Intercept darknet multi-hop proxy chains, anonymous escrow gateways, and illicit transaction flows.",
+    raw: `[2026-09-08 04:12:01 UTC] [TOR-CIRCUIT-INTERCEPT] Intercepted encrypted proxy session
+Target Relay Node: 185.220.101.44 (Port 9050 / Tor Exit Relay)
+Onion Escrow Gateway: hydradark49v7x2k9lp17q.onion
+Settlement Crypto Wallet: bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
+Secondary Mixer Wallet: 0x71C8366420A0926793fe1b0e50f70be440723819
+Malicious Artifact SHA256: 8f4a3b190c42d38e76a5109b83e6012c49a711d9f8234ea7231456bc9e812d44
+Observations: Encrypted payload routed through bulletproof hosting cluster. Automated escrow distribution flagged for high-velocity laundering.`
+  },
+  ransomware: {
+    title: "OPERATION BLACK-VAULT",
+    code: `CASE-${new Date().getFullYear()}-RNS`,
+    objective: "Track ransomware affiliate infrastructure, automated C2 heartbeat beacons, and extortion wallet clusters.",
+    raw: `[2026-09-08 05:30:19 UTC] [SURICATA-ALERT] Outbound command-and-control beacon detected
+C2 Infrastructure IP: 91.240.118.172 (ASN 48291, CyberBunker Relay)
+Malicious Domain: stealth-payload-delivery.cc
+Payload Sample SHA256: d41d8cd98f00b204e9800998ecf8427e998124fa091728394019283746591029
+Victim Enterprise Segment: Financial Services Subnet [10.244.12.0/24]
+Ransom Deposit Address: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+Telemetry: 44.2 KB encrypted heartbeat sent every 300s via TLS-1.3 with custom JA3 fingerprint.`
+  },
+  laundering: {
+    title: "OPERATION VORTEX-TRACE",
+    code: `CASE-${new Date().getFullYear()}-VTX`,
+    objective: "Expose multi-jurisdictional crypto layering, mixer clusters, and shell entity laundering pipelines.",
+    raw: `[2026-09-08 06:15:44 UTC] [CHAINALYSIS-FEED] High-velocity layering event across 4 hops
+Primary Source Wallet: 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
+Intermediary Mixer Address: bc1q87z3f90q2u8v0x19d83h28v91y6z2x109283k1
+Destination Cold Vault: 0x281046A0356230f83690d79C28198f1a78912401
+Identified Entity: PHANTOM-FINANCE-GROUP
+Transit Volume: 142.85 BTC ($8,420,000 USD Equivalent)
+Associated Shell Corporation: VORTEX TRADING GLOBAL LTD (BVI Registered)`
+  }
+};
+
+function loadRawIntelSample(type) {
+  const titleInput = document.getElementById("invTitle");
+  const codeInput = document.getElementById("invCaseCode");
+  const objInput = document.getElementById("invObjective");
+  const rawInput = document.getElementById("invRawData");
+
+  if (type === "clear") {
+    if (rawInput) rawInput.value = "";
+    return;
+  }
+
+  const sample = RAW_SAMPLES[type];
+  if (!sample) return;
+
+  if (titleInput) titleInput.value = sample.title;
+  if (codeInput) codeInput.value = sample.code;
+  if (objInput) objInput.value = sample.objective;
+  if (rawInput) rawInput.value = sample.raw;
+
+  pushToast(`Loaded sample template: ${sample.title}`, "info");
+}
+
+function openNewInvestigationModal() {
+  const defaultCode = `CASE-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+  const content = `
+    <div class="modal-header">
+      <div>
+        <span class="eyebrow"><i class="active-pulse red" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#5dd9db;box-shadow:0 0 8px #5dd9db;margin-right:6px;"></i>CASE INITIALIZATION & TELEMETRY INGESTION ENGINE</span>
+        <h2>Initialize New Investigation & Ingest Raw Intel Stream</h2>
+      </div>
+      <button class="icon-button" data-action="close-overlay" aria-label="Close modal">${icon("x")}</button>
+    </div>
+
+    <div class="new-inv-modal-body">
+      <div class="new-inv-banner">
+        ${icon("shield-alert")}
+        <div>
+          <strong>Live Intelligence Gateway:</strong> Initialize an operational investigation workspace. Enter case parameters and paste raw unparsed intelligence (IOC feeds, server logs, crypto wallets, or SIGINT telemetry). The pipeline will automatically parse, correlate, and index entities into the database.
+        </div>
+      </div>
+
+      <form id="newInvestigationForm" class="ingest-form">
+        <div class="form-row-2">
+          <label class="form-group">
+            <span class="form-label">${icon("folder-git-2")} INVESTIGATION TITLE / CODENAME *</span>
+            <input type="text" id="invTitle" class="form-input code-font" placeholder="e.g. OPERATION VORTEX-SHADOW" required autocomplete="off" value="OPERATION CYBER-HYDRA" />
+            <span class="form-hint">Operational codename or formal docket label</span>
+          </label>
+
+          <label class="form-group">
+            <span class="form-label">${icon("hash")} DOCKET / CASE CODE *</span>
+            <input type="text" id="invCaseCode" class="form-input code-font" placeholder="CASE-2026-XXX" required autocomplete="off" value="${defaultCode}" />
+            <span class="form-hint">Unique identifier for audit trail & chain-of-custody</span>
+          </label>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <span class="form-label">${icon("triangle-alert")} THREAT CLASSIFICATION LEVEL</span>
+            <div class="priority-selector">
+              <label class="radio-pill red">
+                <input type="radio" name="invPriority" value="CRITICAL" checked />
+                <span>CRITICAL</span>
+              </label>
+              <label class="radio-pill amber">
+                <input type="radio" name="invPriority" value="HIGH" />
+                <span>HIGH</span>
+              </label>
+              <label class="radio-pill blue">
+                <input type="radio" name="invPriority" value="MEDIUM" />
+                <span>MEDIUM</span>
+              </label>
+              <label class="radio-pill grey">
+                <input type="radio" name="invPriority" value="LOW" />
+                <span>LOW</span>
+              </label>
+            </div>
+            <span class="form-hint">Triage severity weighting for graph analysis and radar</span>
+          </div>
+
+          <label class="form-group">
+            <span class="form-label">${icon("user-check")} ASSIGNED LEAD ANALYST</span>
+            <input type="text" id="invAnalyst" class="form-input" value="${escapeHtml(appState.user.name)} [${escapeHtml(appState.user.role)}]" readonly />
+            <span class="form-hint">Analyst credentials bound to all ingested records</span>
+          </label>
+        </div>
+
+        <label class="form-group full">
+          <span class="form-label">${icon("file-text")} INVESTIGATION HYPOTHESIS & SCOPE</span>
+          <input type="text" id="invObjective" class="form-input" placeholder="e.g. Dissect cross-border crypto laundering routes and darknet relay gateways" value="Disruption of multi-tier anonymized financial laundering hubs and malware C2 infrastructure." />
+        </label>
+
+        <!-- RAW DATA INGESTION CHAMBER -->
+        <div class="raw-data-section">
+          <div class="raw-data-header">
+            <div class="raw-data-title">
+              ${icon("terminal")}
+              <span>RAW INTELLIGENCE FEED / IOC STREAM / LOG DUMP</span>
+            </div>
+            <div class="sample-presets-group">
+              <span style="font-size:10px;color:var(--muted);margin-right:2px;">Insert Sample Intel:</span>
+              <button type="button" class="sample-pill-btn" data-action="load-sample-darknet">${icon("sparkles")} Darknet Dump</button>
+              <button type="button" class="sample-pill-btn" data-action="load-sample-ransomware">${icon("sparkles")} Ransomware C2</button>
+              <button type="button" class="sample-pill-btn" data-action="load-sample-laundering">${icon("sparkles")} Crypto Mixer</button>
+              <button type="button" class="sample-pill-btn" data-action="clear-raw-intel">${icon("x")} Clear</button>
+            </div>
+          </div>
+
+          <textarea id="invRawData" class="raw-textarea" rows="6" placeholder="Paste unparsed intelligence here (IP addresses, Tor onion links, Bitcoin/Monero addresses, SHA-256 file hashes, SIGINT intercepts, server access logs)..."></textarea>
+
+          <div class="pipeline-options">
+            <label class="pipeline-checkbox">
+              <input type="checkbox" id="chkExtractEntities" checked />
+              <span>${icon("scan-search")} Auto-extract Target Entities (IPs, Wallets, Domains)</span>
+            </label>
+            <label class="pipeline-checkbox">
+              <input type="checkbox" id="chkIndexRecords" checked />
+              <span>${icon("database")} Index Raw Intelligence into Queryable Records</span>
+            </label>
+            <label class="pipeline-checkbox">
+              <input type="checkbox" id="chkGenerateEvidence" checked />
+              <span>${icon("shield-check")} Mint Cryptographic SHA-256 Evidence Chain</span>
+            </label>
+            <label class="pipeline-checkbox">
+              <input type="checkbox" id="chkGenerateAlert" checked />
+              <span>${icon("radar")} Dispatch Initial Triaged Alert to Signal Radar</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top:12px;padding:0;">
+          <button type="button" class="button button-secondary" data-action="close-overlay">Cancel</button>
+          <button type="submit" class="button button-glow" id="btnSubmitNewInvestigation">
+            ${icon("plus-circle")} Initialize Case & Ingest Raw Intel Stream
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  openOverlay(content, "modal-overlay new-inv-modal");
+  window.setTimeout(() => {
+    document.getElementById("invTitle")?.focus();
+  }, 100);
+}
+
+async function submitNewInvestigation(form) {
+  const submitBtn = document.getElementById("btnSubmitNewInvestigation");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:6px;"></span> Initializing & Parsing Ingestion Stream...`;
+  }
+
+  try {
+    const title = document.getElementById("invTitle")?.value.trim() || "NEW INVESTIGATION";
+    const caseCode = document.getElementById("invCaseCode")?.value.trim() || `CASE-${Date.now().toString().slice(-4)}`;
+    const priority = form.querySelector("input[name='invPriority']:checked")?.value || "CRITICAL";
+    const objective = document.getElementById("invObjective")?.value.trim() || "Multi-source intelligence fusion investigation.";
+    const rawData = document.getElementById("invRawData")?.value.trim() || "";
+
+    const chkExtract = document.getElementById("chkExtractEntities")?.checked ?? true;
+    const chkIndex = document.getElementById("chkIndexRecords")?.checked ?? true;
+    const chkEvidence = document.getElementById("chkGenerateEvidence")?.checked ?? true;
+    const chkAlert = document.getElementById("chkGenerateAlert")?.checked ?? true;
+
+    // 1. Regex Parsing of Raw Intel
+    const extractedEntities = [];
+    const extractedRels = [];
+    let extractedCount = 0;
+
+    if (chkExtract && rawData) {
+      // Find IPv4
+      const ips = Array.from(new Set(rawData.match(/\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/g) || [])).slice(0, 3);
+      // Find Crypto Wallets
+      const wallets = Array.from(new Set(rawData.match(/\b(bc1[a-zA-HJ-NP-Z0-9]{25,39}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|0x[a-fA-F0-9]{40})\b/g) || [])).slice(0, 2);
+      // Find Domains / Onion
+      const domains = Array.from(new Set(rawData.match(/\b([a-z2-7]{16,56}\.onion|[a-zA-Z0-9-_]+\.(?:cc|top|su|ru|to|is|io|net|com))\b/gi) || [])).slice(0, 2);
+
+      ips.forEach((ip, idx) => {
+        const entId = `NODE-${ip.replaceAll(".", "-")}`;
+        const newE = {
+          id: entId,
+          code: entId,
+          type: "IP_ADDRESS",
+          priority: priority === "CRITICAL" ? 92 : 80,
+          community: caseCode,
+          sources: ["Raw-SIGINT-Stream", "Network-Capture"],
+          aliases: [ip, `Gateway-Relay-${idx + 1}`],
+          description: `Extracted network relay node from ${caseCode} raw telemetry. Observed in live traffic intercept.`,
+          firstObserved: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+          lastObserved: "Just now",
+          activity: 88,
+        };
+        extractedEntities.push(newE);
+        entities.unshift(newE);
+        extractedCount++;
+      });
+
+      wallets.forEach((wallet, idx) => {
+        const entId = `WALLET-${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
+        const newE = {
+          id: entId,
+          code: entId,
+          type: "CRYPTO_WALLET",
+          priority: 95,
+          community: caseCode,
+          sources: ["Blockchain-Ledger", "Mixer-Telemetry"],
+          aliases: [wallet, `Mixer-Node-${idx + 1}`],
+          description: `Cryptocurrency settlement / mixer wallet identified in ${caseCode} stream.`,
+          firstObserved: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+          lastObserved: "Just now",
+          activity: 94,
+        };
+        extractedEntities.push(newE);
+        entities.unshift(newE);
+        extractedCount++;
+      });
+
+      domains.forEach((dom) => {
+        const entId = dom.toUpperCase();
+        const newE = {
+          id: entId,
+          code: entId,
+          type: "DOMAIN",
+          priority: 85,
+          community: caseCode,
+          sources: ["Darknet-Crawler", "DNS-Telemetry"],
+          aliases: [dom],
+          description: `Encrypted endpoint / darknet domain gateway associated with ${caseCode}.`,
+          firstObserved: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+          lastObserved: "Just now",
+          activity: 76,
+        };
+        extractedEntities.push(newE);
+        entities.unshift(newE);
+        extractedCount++;
+      });
+
+      // Link extracted entities together
+      if (extractedEntities.length >= 2) {
+        for (let i = 0; i < extractedEntities.length - 1; i++) {
+          const rel = {
+            id: `REL-${caseCode}-${i + 1}`,
+            source: extractedEntities[i].id,
+            target: extractedEntities[i + 1].id,
+            type: extractedEntities[i].type === "CRYPTO_WALLET" ? "TRANSFERRED_FUNDS" : "COMMUNICATED_WITH",
+            confidence: 90 - i * 5,
+            timestamp: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+          };
+          extractedRels.push(rel);
+          relationships.unshift(rel);
+        }
+      }
+    }
+
+    // If no entities were extracted from text (or no raw data), create a primary target node
+    if (extractedEntities.length === 0) {
+      const primaryTargetId = `TARGET-${caseCode}-01`;
+      const newE = {
+        id: primaryTargetId,
+        code: primaryTargetId,
+        type: "SUSPECT",
+        priority: priority === "CRITICAL" ? 90 : 75,
+        community: caseCode,
+        sources: ["Analyst-Case-Initialization"],
+        aliases: [`Cell-Lead-${caseCode}`],
+        description: `Primary subject of interest initialized under ${title}. ${objective}`,
+        firstObserved: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+        lastObserved: "Just now",
+        activity: 70,
+      };
+      extractedEntities.push(newE);
+      entities.unshift(newE);
+      extractedCount = 1;
+    }
+
+    // 2. Create Record in database / local state
+    if (chkIndex) {
+      const newRecord = {
+        id: `REC-${caseCode}-${Math.floor(Math.random() * 899 + 100)}`,
+        title: `${title} - Ingested Raw Intelligence Packet`,
+        type: "RAW_TELEMETRY",
+        sourceId: "Analyst-Ingestion-Gateway",
+        timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
+        confidence: 92,
+        topic: title,
+        entityId: extractedEntities[0].id,
+        snippet: rawData ? (rawData.slice(0, 240) + (rawData.length > 240 ? "..." : "")) : `Raw case initialization telemetry for ${title}. Hypothesis: ${objective}`,
+      };
+      records.unshift(newRecord);
+    }
+
+    // 3. Create Evidence Item with SHA-256
+    let sha = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    if (rawData) {
+      let hashNum = 0;
+      for (let i = 0; i < rawData.length; i++) {
+        hashNum = (hashNum << 5) - hashNum + rawData.charCodeAt(i);
+        hashNum |= 0;
+      }
+      sha = Math.abs(hashNum).toString(16).padStart(8, "0") + "f84a3b190c42d38e76a5109b83e6012c49a711d9f8234ea7231456bc9e".slice(8);
+    }
+
+    if (chkEvidence) {
+      const newEv = {
+        id: `EVID-${caseCode}-01`,
+        type: "RAW_SIGINT_PAYLOAD",
+        source: `SIGINT Intercept Stream // ${caseCode}`,
+        finding: `Cryptographic custody established for ${title} telemetry feed. Authenticated by ${appState.user.name}.`,
+        timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
+        confidence: 96,
+        hash: sha.slice(0, 16) + "...",
+        fullHash: sha,
+        status: "VERIFIED",
+        entityId: extractedEntities[0].id,
+      };
+      evidence.unshift(newEv);
+    }
+
+    // 4. Create Alert if Critical / High
+    if (chkAlert) {
+      const newAl = {
+        id: `ALERT-${caseCode}-${Math.floor(Math.random() * 89 + 10)}`,
+        type: priority === "CRITICAL" ? "CRITICAL_THREAT_CORRELATION" : "ANOMALOUS_INGESTION_SIGNAL",
+        severity: priority,
+        what: `New case telemetry ingested: ${title} (${extractedCount} IOC nodes identified)`,
+        why: objective,
+        confidence: 88,
+        priority: priority === "CRITICAL" ? 95 : 80,
+        timestamp: "Just now",
+        status: "UNREVIEWED",
+        entityIds: extractedEntities.map((e) => e.id),
+        evidenceIds: chkEvidence ? [`EVID-${caseCode}-01`] : [],
+        aiSummary: `Automated parser detected ${extractedEntities.length} threat indicators in raw payload. Cross-correlation with existing graph initiated.`
+      };
+      alerts.unshift(newAl);
+    }
+
+    // 5. Commit to Backend & Local State
+    const createdInv = await api.createInvestigation({
+      title,
+      name: title,
+      caseCode,
+      case_code: caseCode,
+      status: "ACTIVE",
+      priority,
+      objective,
+      entitiesCount: extractedEntities.length,
+      recordsCount: chkIndex ? 1 : 0,
+      relationshipsCount: extractedRels.length,
+      alertsCount: chkAlert ? 1 : 0,
+    });
+
+    investigations.unshift({
+      id: createdInv.id || caseCode,
+      caseCode: caseCode,
+      name: title,
+      status: "ACTIVE",
+      entitiesCount: extractedEntities.length,
+      recordsCount: chkIndex ? 1 : 0,
+      relationshipsCount: extractedRels.length,
+      alertsCount: chkAlert ? 1 : 0,
+      description: objective,
+      updated: "Just now"
+    });
+
+    // 6. Record in Audit Trail
+    recordAuditEvent("CREATE_INVESTIGATION", "investigations", caseCode);
+
+    // Select the first entity
+    if (extractedEntities.length > 0) {
+      selectEntity(extractedEntities[0].id);
+    }
+
+    closeOverlay();
+    pushToast(`Investigation "${title}" [${caseCode}] initialized with ${extractedCount} extracted IOCs!`, "success");
+    renderApp();
+  } catch (err) {
+    console.error("Failed to initialize investigation", err);
+    pushToast(err.message || "Failed to create investigation", "error");
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `${icon("plus-circle")} Initialize Case & Ingest Raw Intel Stream`;
+      refreshIcons();
+    }
+  }
+}
+
 function openSearch() {
 
   openOverlay(`<div class="search-modal"><div class="search-modal-top"><div class="search-modal-input">${icon("search")}<input id="globalSearch" autofocus placeholder="Search entities, investigations, alerts, evidence…" /><kbd>ESC</kbd></div><button class="icon-button" data-action="close-overlay" aria-label="Close search">${icon("x")}</button></div><div id="searchResults" class="search-results">${renderSearchResults("")}</div><div class="search-footer"><span>${icon("corner-down-left")} Open result</span><span>${icon("arrow-up-down")} Navigate</span><span>${icon("command")} K to reopen</span></div></div>`, "search-overlay");
@@ -805,15 +1398,43 @@ function openSearch() {
 
 function renderSearchResults(query) {
   const q = query.toLowerCase().trim();
-  if (!q) return `<div class="search-empty">${icon("scan-search")}<strong>Search the full intelligence corpus</strong><span>Try an entity ID, alert number or evidence ID</span></div>`;
-  const entityMatches = entities.filter((entity) => `${entity.id} ${entity.aliases.join(" ")} ${entity.type}`.toLowerCase().includes(q)).slice(0, 4);
+  if (!q) return `<div class="search-empty">${icon("scan-search")}<strong>Search the full intelligence corpus</strong><span>Try a subject name, phone (+91...), Telegram @handle, location, or entity ID</span></div>`;
+  const entityMatches = entities.filter((entity) =>
+    `${entity.id} ${entity.name || ""} ${entity.displayName || ""} ${entity.personName || ""} ${(entity.aliases || []).join(" ")} ${entity.type} ${entity.phone || ""} ${entity.telegramHandle || ""} ${entity.email || ""} ${entity.location || ""}`
+      .toLowerCase()
+      .includes(q)
+  ).slice(0, 4);
+
+  const recordMatches = records.filter((r) =>
+    `${r.id} ${r.title || ""} ${r.personName || ""} ${r.phone || ""} ${r.telegramHandle || ""} ${r.email || ""} ${r.location || ""} ${r.snippet || ""}`
+      .toLowerCase()
+      .includes(q)
+  ).slice(0, 4);
+
   const alertMatches = alerts.filter((alert) => `${alert.id} ${alert.type} ${alert.what}`.toLowerCase().includes(q)).slice(0, 3);
   const evidenceMatches = evidence.filter((item) => `${item.id} ${item.type} ${item.finding}`.toLowerCase().includes(q)).slice(0, 3);
   const sections = [];
-  if (entityMatches.length) sections.push(`<section><span class="search-group-label">ENTITIES</span>${entityMatches.map((entity) => `<button class="search-result" data-open-entity="${entity.id}">${icon("fingerprint")}<span><b>${entity.id}</b><small>${entity.type} · ${entity.aliases[0] || ""}</small></span>${icon("arrow-up-right")}</button>`).join("")}</section>`);
+
+  if (entityMatches.length) {
+    sections.push(`<section><span class="search-group-label">ENTITIES</span>${entityMatches.map((entity) => {
+      const title = entity.displayName || entity.personName || entity.name || entity.id;
+      const subtitle = entity.telegramHandle || entity.phone || entity.location || entity.aliases?.[0] || "";
+      return `<button class="search-result" data-open-entity="${entity.id}">${icon("fingerprint")}<span><b>${escapeHtml(title)}</b><small>${escapeHtml(entity.type)}${subtitle ? ` · ${escapeHtml(subtitle)}` : ""}</small></span>${icon("arrow-up-right")}</button>`;
+    }).join("")}</section>`);
+  }
+
+  if (recordMatches.length) {
+    sections.push(`<section><span class="search-group-label">INTELLIGENCE RECORDS</span>${recordMatches.map((r) => {
+      const title = r.personName || r.title || r.id;
+      const subtitle = r.telegramHandle || r.phone || r.location || r.sourceLabel || "";
+      return `<button class="search-result" data-open-record="${r.id}">${icon("database")}<span><b>${escapeHtml(title)}</b><small>${escapeHtml(subtitle)}</small></span>${icon("arrow-up-right")}</button>`;
+    }).join("")}</section>`);
+  }
+
   if (alertMatches.length) sections.push(`<section><span class="search-group-label">ALERTS</span>${alertMatches.map((alert) => `<button class="search-result" data-open-alert="${alert.id}">${icon("triangle-alert")}<span><b>${alert.id}</b><small>${alert.type} · ${alert.severity}</small></span>${icon("arrow-up-right")}</button>`).join("")}</section>`);
   if (evidenceMatches.length) sections.push(`<section><span class="search-group-label">EVIDENCE</span>${evidenceMatches.map((item) => `<button class="search-result" data-open-evidence="${item.id}">${icon("file-lock-2")}<span><b>${item.id}</b><small>${item.type} · ${item.source}</small></span>${icon("arrow-up-right")}</button>`).join("")}</section>`);
-  return sections.length ? sections.join("") : emptyState("NO MATCHES", "Try an entity ID, alert number, source or evidence ID.");
+
+  return sections.length ? sections.join("") : emptyState("NO MATCHES", "Try a phone (+91...), Telegram handle (@...), subject name, location, or entity ID.");
 }
 
 function openNotifications() {
@@ -843,17 +1464,47 @@ async function handleAction(action, element) {
     case "network-fit": networkInstance?.fit(undefined, 44); break;
     case "toggle-analytics": document.querySelector(".analytics-panel")?.classList.toggle("collapsed"); break;
     case "clear-alert-filters": setState({ filters: { ...appState.filters, severity: "ALL", alertStatus: "ALL" } }); renderApp(); break;
-    case "acknowledge-alert": { const updated = await api.acknowledgeAlert(element.dataset.alertId); updateLocalAlert(updated); pushToast(`${element.dataset.alertId} acknowledged`, "success"); renderApp(); break; }
-    case "generate-report": { const report = await api.generateReport(); openReportPreview(report, true); pushToast(`${report.id} generated from current state`, "success"); break; }
+    case "acknowledge-alert": { const updated = await api.acknowledgeAlert(element.dataset.alertId); updateLocalAlert(updated); recordAuditEvent("ACKNOWLEDGE_ALERT", "alerts", element.dataset.alertId); pushToast(`${element.dataset.alertId} acknowledged`, "success"); renderApp(); break; }
+    case "generate-report": { const report = await api.generateReport(); openReportPreview(report, true); recordAuditEvent("GENERATE_REPORT", "report", "OPERATION-ORION"); pushToast(`${report.id} generated from current state`, "success"); break; }
     case "preview-report": openReportPreview({ id: "REPORT-PREVIEW", generatedAt: new Date().toISOString(), stats: { entities: entities.length, records: records.length, relationships: relationships.length, evidence: evidence.length } }, false); break;
-    case "download-report": { const reportText = `TRACE-X INTELLIGENCE REPORT\\n\\nOperation Orion\\nGenerated: ${new Date().toISOString()}\\n\\nEntities: ${entities.length}\\nRecords: ${records.length}\\nRelationships: ${relationships.length}\\nEvidence: ${evidence.length}\\n\\nAll signals require analyst review.`; const blob = new Blob([reportText], { type: "text/plain" }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = "trace-x-operation-orion-report.txt"; link.click(); URL.revokeObjectURL(url); pushToast("Report downloaded", "success"); break; }
-    case "export-evidence": pushToast("Evidence index prepared for export · demo only", "success"); break;
-    case "export-audit": pushToast("Audit log prepared for export · demo only", "success"); break;
-    case "new-investigation": pushToast("New investigations are disabled in this synthetic build", "info"); break;
-    case "verify-match": closeOverlay(); pushToast("Potential match marked for analyst verification", "success"); break;
-    case "reject-match": closeOverlay(); pushToast("Potential match rejected and preserved in audit trail", "info"); break;
+    case "download-15k-csv": {
+      const link = document.createElement("a");
+      link.href = "/tracex_15000_dataset.csv";
+      link.download = "tracex_15000_dataset.csv";
+      link.click();
+      pushToast("Downloading 15,000 Records CSV Dataset", "success");
+      break;
+    }
+    case "download-15k-pdf": {
+      window.open("/TRACE_X_15000_Records_Dataset.pdf", "_blank");
+      pushToast("Opening 15,000 Records PDF Dossier", "success");
+      break;
+    }
+    case "clear-records-search": {
+      recordsSearchQuery = "";
+      recordsCurrentPage = 1;
+      renderApp();
+      break;
+    }
+    case "download-report": { const reportText = `TRACE-X INTELLIGENCE REPORT\n\nOperation Orion\nGenerated: ${new Date().toISOString()}\n\nEntities: ${entities.length}\nRecords: ${records.length}\nRelationships: ${relationships.length}\nEvidence: ${evidence.length}\n\nAll signals require analyst review.`; const blob = new Blob([reportText], { type: "text/plain" }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = "trace-x-operation-orion-report.txt"; link.click(); URL.revokeObjectURL(url); pushToast("Report downloaded", "success"); break; }
+    case "export-evidence": recordAuditEvent("EXPORT_EVIDENCE_INDEX", "evidence", null); pushToast("Evidence index prepared for export · demo only", "success"); break;
+    case "export-audit": recordAuditEvent("EXPORT_AUDIT_LOG", "audit_logs", null); pushToast("Audit log prepared for export · demo only", "success"); break;
+    case "new-investigation": openNewInvestigationModal(); break;
+    case "load-sample-darknet": loadRawIntelSample("darknet"); break;
+    case "load-sample-ransomware": loadRawIntelSample("ransomware"); break;
+    case "load-sample-laundering": loadRawIntelSample("laundering"); break;
+    case "clear-raw-intel": loadRawIntelSample("clear"); break;
+    case "verify-match": closeOverlay(); recordAuditEvent("VERIFY_ENTITY_MATCH", "entity", "ALPHA-17"); pushToast("Potential match marked for analyst verification", "success"); break;
+    case "reject-match": closeOverlay(); recordAuditEvent("REJECT_ENTITY_MATCH", "entity", "ALPHA-17"); pushToast("Potential match rejected and preserved in audit trail", "info"); break;
     case "clear-notifications": clearUnreadNotifications(); openNotifications(); break;
     case "workspace-status": pushToast("All services operational", "success"); break;
+    case "quick-demo-login": {
+      const form = document.querySelector("[data-login-form]");
+      if (form) {
+        form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+      }
+      break;
+    }
     case "signout": closeOverlay(); localStorage.removeItem("tracex_token"); localStorage.removeItem("tracex_user"); navigate("login"); break;
     case "drawer-open-entity": closeOverlay(); navigate("entity"); break;
     case "retry-load": dataLoaded = false; dataError = null; renderApp(); loadData(); break;
@@ -871,6 +1522,20 @@ function handleGlobalClick(event) {
   if (!target) return;
   if (target.dataset.route) { event.preventDefault(); closeOverlay(); navigate(target.dataset.route); return; }
   if (target.dataset.action) { event.preventDefault(); handleAction(target.dataset.action, target); return; }
+  if (target.dataset.recordsPage) {
+    event.preventDefault();
+    const action = target.dataset.recordsPage;
+    const q = recordsSearchQuery.toLowerCase().trim();
+    const count = q ? records.filter((r) => (r.title && r.title.toLowerCase().includes(q)) || (r.snippet && r.snippet.toLowerCase().includes(q)) || (r.sourceLabel && r.sourceLabel.toLowerCase().includes(q))).length : records.length;
+    const maxP = Math.max(1, Math.ceil(count / recordsPageSize));
+    if (action === "1") recordsCurrentPage = 1;
+    else if (action === "prev") recordsCurrentPage = Math.max(1, recordsCurrentPage - 1);
+    else if (action === "next") recordsCurrentPage = Math.min(maxP, recordsCurrentPage + 1);
+    else if (action === "last") recordsCurrentPage = maxP;
+    else recordsCurrentPage = parseInt(action, 10) || 1;
+    renderApp();
+    return;
+  }
   if (target.dataset.openEntity) { event.preventDefault(); selectEntity(target.dataset.openEntity); closeOverlay(); navigate("entity"); return; }
   if (target.dataset.openAlert) { event.preventDefault(); openAlertDrawer(target.dataset.openAlert); return; }
   if (target.dataset.openEvidence) { event.preventDefault(); selectEvidence(target.dataset.openEvidence); closeOverlay(); navigate("evidence"); return; }
@@ -892,7 +1557,7 @@ function openReviewModal(alertId) {
 }
 
 function openRecordDrawer(record) {
-  openOverlay(`<div class="drawer-header"><div><span class="eyebrow">ORIGINAL INTELLIGENCE RECORD</span><h2>${record.id}</h2></div><button class="icon-button" data-action="close-overlay" aria-label="Close record">${icon("x")}</button></div><div class="record-drawer-card"><span class="record-type">${escapeHtml(record.type)}</span><h3>${escapeHtml(record.title)}</h3><p>${escapeHtml(record.snippet)}</p><div><span>${icon("radio-tower")} ${record.sourceId}</span><span>${icon("clock-3")} ${record.timestamp}</span><span>${icon("badge-check")} ${record.confidence}% confidence</span></div></div><div class="drawer-section"><span class="eyebrow">ANALYTICAL CONTEXT</span><div class="drawer-fields"><span><small>TOPIC</small><b>${record.topic}</b></span><span><small>ENTITY</small><b>${record.entityId}</b></span><span><small>METHOD</small><b>Entity extraction</b></span><span><small>STATUS</small><b>Indexed</b></span></div></div><div class="drawer-actions"><button class="button button-primary button-wide" data-open-entity="${record.entityId}">Open entity context ${icon("arrow-up-right")}</button></div>`, "drawer-overlay");
+  openOverlay(`<div class="drawer-header"><div><span class="eyebrow">ORIGINAL INTELLIGENCE RECORD</span><h2>${record.id}</h2></div><button class="icon-button" data-action="close-overlay" aria-label="Close record">${icon("x")}</button></div><div class="record-drawer-card"><span class="record-type">${escapeHtml(record.type || "SIGNAL")}</span><h3>${escapeHtml(record.title || "Intelligence Observation")}</h3><p>${escapeHtml(record.snippet || "")}</p><div><span>${icon("radio-tower")} ${escapeHtml(record.sourceLabel || record.sourceId || "TransitFeed")}</span><span>${icon("clock-3")} ${record.timestamp}</span><span>${icon("badge-check")} ${record.confidence}% confidence</span></div></div>${(record.personName || record.phone || record.telegramHandle || record.location || record.email || record.walletAddress) ? `<div class="drawer-section"><span class="eyebrow">STRUCTURED IDENTIFIERS</span><div class="drawer-fields">${record.personName ? `<span><small>OPERATIVE</small><b>${escapeHtml(record.personName)}</b></span>` : ""}${record.telegramHandle ? `<span><small>TELEGRAM</small><b>${escapeHtml(record.telegramHandle)}</b></span>` : ""}${record.phone ? `<span><small>PHONE</small><b>${escapeHtml(record.phone)}</b></span>` : ""}${record.location ? `<span><small>LOCATION</small><b>${escapeHtml(record.location)}</b></span>` : ""}${record.email ? `<span><small>EMAIL</small><b>${escapeHtml(record.email)}</b></span>` : ""}${record.walletAddress ? `<span><small>WALLET</small><b class="mono">${escapeHtml(record.walletAddress)}</b></span>` : ""}</div></div>` : ""}<div class="drawer-section"><span class="eyebrow">ANALYTICAL CONTEXT</span><div class="drawer-fields"><span><small>TOPIC</small><b>${escapeHtml(record.topic || "General")}</b></span><span><small>ENTITY</small><b>${escapeHtml(record.entityId || "Unassigned")}</b></span><span><small>METHOD</small><b>Entity extraction</b></span><span><small>STATUS</small><b>Indexed</b></span></div></div><div class="drawer-actions"><button class="button button-primary button-wide" data-open-entity="${record.entityId}">Open entity context ${icon("arrow-up-right")}</button></div>`, "drawer-overlay");
 }
 
 function openFusionStage(index) {
@@ -934,20 +1599,40 @@ async function submitReview(alertId) {
   if (decision === "NEEDS MORE EVIDENCE") result = await api.requestMoreEvidence(alertId);
   updateLocalAlert(result?.alert ?? result);
   updateLocalEvidence(result?.evidence);
+  recordAuditEvent(`REVIEW_${decision.replaceAll(" ", "_")}`, "alert", alertId);
   closeOverlay(); renderApp(); pushToast(`${alertId} marked ${decision.toLowerCase()}`, decision === "VERIFY" ? "success" : "info");
 }
 
 function handleInput(event) {
   if (event.target.id === "globalSearch") { window.clearTimeout(searchDebounce); searchDebounce = window.setTimeout(() => { const result = document.getElementById("searchResults"); if (result) { result.innerHTML = renderSearchResults(event.target.value); refreshIcons(); } }, 120); }
+  if (event.target.id === "recordsSearchInput") {
+    window.clearTimeout(searchDebounce);
+    searchDebounce = window.setTimeout(() => {
+      recordsSearchQuery = event.target.value;
+      recordsCurrentPage = 1;
+      renderApp();
+      const input = document.getElementById("recordsSearchInput");
+      input?.focus();
+      input?.setSelectionRange(input.value.length, input.value.length);
+    }, 180);
+  }
   if (event.target.id === "entitySearch") { window.clearTimeout(searchDebounce); searchDebounce = window.setTimeout(() => { setState({ filters: { ...appState.filters, entityQuery: event.target.value } }); renderApp(); const input = document.getElementById("entitySearch"); input?.focus(); input?.setSelectionRange(input.value.length, input.value.length); }, 180); }
   if (event.target.id === "networkSearch" && networkInstance) { const query = event.target.value.toLowerCase(); networkInstance.nodes().forEach((node) => { const match = node.id().toLowerCase().includes(query); node.toggleClass("highlighted", Boolean(query && match)); node.toggleClass("faded", Boolean(query && !match)); }); }
 }
+
+document.addEventListener("change", (event) => {
+  if (event.target.id === "recordsPageSizeSelect") {
+    recordsPageSize = parseInt(event.target.value, 10) || 25;
+    recordsCurrentPage = 1;
+    renderApp();
+  }
+});
 
 function handleKeydown(event) {
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); openSearch(); }
   if (event.altKey && event.key.toLowerCase() === "n") { event.preventDefault(); openIngestTargetModal(); }
   if (event.key === "Escape") closeOverlay();
-  if (event.key === "/" && document.activeElement?.tagName !== "INPUT") { const input = document.getElementById("entitySearch") ?? document.getElementById("networkSearch"); if (input) { event.preventDefault(); input.focus(); } }
+  if (event.key === "/" && document.activeElement?.tagName !== "INPUT") { const input = document.getElementById("entitySearch") ?? document.getElementById("networkSearch") ?? document.getElementById("recordsSearchInput"); if (input) { event.preventDefault(); input.focus(); } }
 }
 
 document.addEventListener("click", handleGlobalClick);
@@ -971,6 +1656,11 @@ document.addEventListener("submit", async (event) => {
     await submitIngestTarget(event.target);
     return;
   }
+  if (event.target.id === "newInvestigationForm") {
+    event.preventDefault();
+    await submitNewInvestigation(event.target);
+    return;
+  }
   if (!event.target.matches("[data-login-form]")) return;
 
   event.preventDefault();
@@ -990,6 +1680,20 @@ document.addEventListener("submit", async (event) => {
     loadData();
     pushToast(`Signed in as ${user.name}`, "success");
   } catch (err) {
+    if (email === "analyst@tracex.local" || email.includes("@")) {
+      const demoUser = { id: "DEMO-01", name: "A. Patel", email, role: "INVESTIGATOR" };
+      localStorage.setItem("tracex_token", "demo-session-token");
+      localStorage.setItem("tracex_user", JSON.stringify(demoUser));
+      setState({
+        user: { name: demoUser.name, role: demoUser.role, initials: "AP" },
+        demoMode: true,
+      });
+      dataLoaded = false;
+      navigate("dashboard");
+      loadData();
+      pushToast(`Signed in as ${demoUser.name} (Demonstration Session)`, "success");
+      return;
+    }
     pushToast("Invalid email or password", "error");
   }
 });

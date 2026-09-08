@@ -1,8 +1,14 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { createIcons, icons } from "lucide";
 import { icon, escapeHtml, priorityBadge } from "./ui.js";
 import { pushToast, selectEntity } from "./state.js";
 import { navigate } from "./router.js";
+import { recordAuditEvent } from "./api.js";
+
+function refreshMapIcons() {
+  createIcons({ icons, attrs: { "stroke-width": 1.8 } });
+}
 
 export const threatNodes = [
   {
@@ -270,6 +276,120 @@ export const threatNodes = [
     bandwidth: "27.5 GB / 24h",
     description: "Major European internet exchange intersection where Operation Orion North Route packets converge.",
     connections: ["NODE-FRA-01"]
+  },
+  {
+    id: "NODE-STK-15",
+    city: "Stockholm",
+    country: "Sweden",
+    countryCode: "SE",
+    flag: "🇸🇪",
+    lat: 59.3293,
+    lng: 18.0686,
+    type: "Failover C2 Cluster",
+    ip: "193.180.119.4",
+    asn: "AS8473 (Bahnhof AB)",
+    severity: "HIGH",
+    riskScore: 87,
+    entityId: "ZETA-88",
+    status: "STANDBY SYNC",
+    bandwidth: "9.6 GB / 24h",
+    description: "Secondary bunker-hosted server maintaining synchronized mirrors of exfiltration databases.",
+    connections: ["NODE-FRA-01", "NODE-REYK-02"]
+  },
+  {
+    id: "NODE-TOR-16",
+    city: "Toronto",
+    country: "Canada",
+    countryCode: "CA",
+    flag: "🇨🇦",
+    lat: 43.6532,
+    lng: -79.3832,
+    type: "Shadow API Gateway",
+    ip: "199.19.224.50",
+    asn: "AS812 (Rogers Telecom)",
+    severity: "HIGH",
+    riskScore: 82,
+    entityId: "ORION-HUB-01",
+    status: "TARGET PROBE DETECTED",
+    bandwidth: "18.3 GB / 24h",
+    description: "Secondary financial API gateway receiving coordinated token replay payloads.",
+    connections: ["NODE-NYC-06"]
+  },
+  {
+    id: "NODE-HKG-17",
+    city: "Hong Kong",
+    country: "Hong Kong",
+    countryCode: "HK",
+    flag: "🇭🇰",
+    lat: 22.3193,
+    lng: 114.1694,
+    type: "Dark Pool Escrow Relay",
+    ip: "103.243.24.18",
+    asn: "AS135377 (HKIX)",
+    severity: "CRITICAL",
+    riskScore: 93,
+    entityId: "MARKET-NODE-08",
+    status: "HIGH-VELOCITY SETTLEMENT",
+    bandwidth: "24.1 GB / 24h",
+    description: "High-frequency crypto arbitrage tunnel executing automated Monero obfuscation cycles.",
+    connections: ["NODE-SIN-04", "NODE-DXB-08"]
+  },
+  {
+    id: "NODE-TLV-18",
+    city: "Tel Aviv",
+    country: "Israel",
+    countryCode: "IL",
+    flag: "🇮🇱",
+    lat: 32.0853,
+    lng: 34.7818,
+    type: "Threat Telemetry Sensor",
+    ip: "185.190.140.99",
+    asn: "AS12849 (Hot Telecom)",
+    severity: "MEDIUM",
+    riskScore: 66,
+    entityId: "SOURCE-05",
+    status: "PASSIVE INTERCEPT",
+    bandwidth: "5.1 GB / 24h",
+    description: "Regional threat intelligence probe detecting automated exploitation attempts against banking protocols.",
+    connections: ["NODE-FRA-01"]
+  },
+  {
+    id: "NODE-JNB-19",
+    city: "Johannesburg",
+    country: "South Africa",
+    countryCode: "ZA",
+    flag: "🇿🇦",
+    lat: -26.2041,
+    lng: 28.0473,
+    type: "Subsea Transit Point",
+    ip: "196.25.1.1",
+    asn: "AS37457 (Liquid Intelligent)",
+    severity: "MEDIUM",
+    riskScore: 57,
+    entityId: "KAPPA-09",
+    status: "MONITORED",
+    bandwidth: "4.4 GB / 24h",
+    description: "African undersea transit sensor correlating long-distance encrypted session flows.",
+    connections: ["NODE-LON-07"]
+  },
+  {
+    id: "NODE-MAD-20",
+    city: "Madrid",
+    country: "Spain",
+    countryCode: "ES",
+    flag: "🇪🇸",
+    lat: 40.4168,
+    lng: -3.7038,
+    type: "Iberian Relay Tap",
+    ip: "195.53.12.8",
+    asn: "AS12479 (Telefonica ES)",
+    severity: "MEDIUM",
+    riskScore: 63,
+    entityId: "SOURCE-07",
+    status: "PACKET LOGGING",
+    bandwidth: "7.8 GB / 24h",
+    description: "Southern European fiber tap intercepting secondary fast-flux proxy traffic.",
+    connections: ["NODE-AMS-14"]
   }
 ];
 
@@ -278,14 +398,106 @@ export const threatTrajectories = [
   { from: "NODE-FRA-01", to: "NODE-NYC-06", type: "DATA EXFILTRATION STREAM", color: "#ec746e", speed: 2200 },
   { from: "NODE-SEO-13", to: "NODE-TYO-05", type: "APT BEACONING PULSE", color: "#ec746e", speed: 2500 },
   { from: "NODE-TYO-05", to: "NODE-SIN-04", type: "RELAYED SESSION TUNNEL", color: "#5dd9db", speed: 3000 },
-  { from: "NODE-SIN-04", to: "NODE-DXB-08", type: "ESCROW SETTLEMENT VECTOR", color: "#e7b86b", speed: 3400 },
-  { from: "NODE-DXB-08", to: "NODE-ZUR-03", type: "LAUNDERING ROUTE", color: "#e7b86b", speed: 3100 },
+  { from: "NODE-SIN-04", to: "NODE-HKG-17", type: "ESCROW SETTLEMENT VECTOR", color: "#e7b86b", speed: 2700 },
+  { from: "NODE-HKG-17", to: "NODE-DXB-08", type: "LAUNDERING ROUTE", color: "#e7b86b", speed: 3200 },
+  { from: "NODE-DXB-08", to: "NODE-ZUR-03", type: "CAPITAL UNLINKING", color: "#e7b86b", speed: 3100 },
   { from: "NODE-BUC-09", to: "NODE-AMS-14", type: "BOTNET SCAN SWEEP", color: "#ec746e", speed: 2400 },
   { from: "NODE-MUM-12", to: "NODE-FRA-01", type: "VPN TUNNEL HANDSHAKE", color: "#5dd9db", speed: 2900 },
-  { from: "NODE-SAO-10", to: "NODE-NYC-06", type: "CREDENTIAL STUFFING RELAY", color: "#906ff0", speed: 3600 }
+  { from: "NODE-SAO-10", to: "NODE-NYC-06", type: "CREDENTIAL STUFFING RELAY", color: "#906ff0", speed: 3600 },
+  { from: "NODE-STK-15", to: "NODE-FRA-01", type: "FAILOVER C2 MIRROR", color: "#5dd9db", speed: 2600 },
+  { from: "NODE-NYC-06", to: "NODE-TOR-16", type: "CROSS-BORDER PROBE", color: "#ec746e", speed: 2300 },
+  { from: "NODE-MAD-20", to: "NODE-AMS-14", type: "TRANSIT CONVERGENCE", color: "#5dd9db", speed: 2800 },
+  { from: "NODE-JNB-19", to: "NODE-LON-07", type: "SUBSEA OPTIC BEACON", color: "#906ff0", speed: 3500 }
 ];
 
+export const TILE_PROVIDERS = {
+  "google-hybrid": {
+    name: "Google Satellite Hybrid",
+    badge: "GOOGLE DIRECT / NO KEY NEEDED",
+    url: "https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+    subdomains: "0123",
+    maxZoom: 20,
+    requiresKey: false,
+    description: "High-resolution Google Satellite imagery fused with road and city boundary vectors."
+  },
+  "google-roadmap": {
+    name: "Google Maps Tactical Roadmap",
+    badge: "GOOGLE DIRECT / NO KEY NEEDED",
+    url: "https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+    subdomains: "0123",
+    maxZoom: 20,
+    requiresKey: false,
+    description: "Standard Google Maps road infrastructure and high-density location telemetry."
+  },
+  "google-terrain": {
+    name: "Google Shaded Terrain",
+    badge: "GOOGLE DIRECT / NO KEY NEEDED",
+    url: "https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}",
+    subdomains: "0123",
+    maxZoom: 20,
+    requiresKey: false,
+    description: "3D topographical contours and elevation relief by Google Maps."
+  },
+  "carto-dark": {
+    name: "CARTO Dark Matter",
+    badge: "TACTICAL DARK / NO KEY NEEDED",
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    subdomains: "abcd",
+    maxZoom: 19,
+    requiresKey: false,
+    description: "High-contrast tactical dark canvas optimized for low-latency visual intelligence."
+  },
+  "esri-dark": {
+    name: "Esri World Dark Gray Canvas",
+    badge: "FAILSAFE / NO KEY NEEDED",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    subdomains: "",
+    maxZoom: 16,
+    requiresKey: false,
+    description: "Enterprise GIS defense layer with guaranteed uptime and zero rate-limiting."
+  },
+  "osm-standard": {
+    name: "OpenStreetMap (Standard)",
+    badge: "OPEN COMMUNITY",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    subdomains: "abc",
+    maxZoom: 19,
+    requiresKey: false,
+    description: "Global open-source topographic and street network map."
+  },
+  "mapbox-dark": {
+    name: "Mapbox Dark v11",
+    badge: "MAPBOX PUBLIC",
+    url: "https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token={API_KEY}",
+    subdomains: "",
+    maxZoom: 20,
+    requiresKey: true,
+    keyPlaceholder: "pk.eyJ1Ijo...",
+    description: "Ultra-high-definition vector dark navigation and tactical styling from Mapbox."
+  },
+  "maptiler-dark": {
+    name: "MapTiler Dataviz Dark",
+    badge: "MAPTILER CLOUD",
+    url: "https://api.maptiler.com/maps/dataviz-dark/256/{z}/{x}/{y}.png?key={API_KEY}",
+    subdomains: "",
+    maxZoom: 20,
+    requiresKey: true,
+    keyPlaceholder: "e.g. your_maptiler_key",
+    description: "Tailored intelligence visualization tiles from MapTiler Cloud."
+  },
+  "custom": {
+    name: "Custom TMS / Tile Server",
+    badge: "ENTERPRISE PROXY",
+    url: "{CUSTOM_URL}",
+    subdomains: "abc",
+    maxZoom: 20,
+    requiresKey: false,
+    description: "Internal GIS server or proxy with custom {z}/{x}/{y} URL template."
+  }
+};
+
 let mapInstance = null;
+let currentTileLayer = null;
 let markersLayer = null;
 let arcsLayer = null;
 let animationFrameId = null;
@@ -293,6 +505,178 @@ let telemetryTimer = null;
 let currentFilterSeverity = "ALL";
 let activeSelectedNodeId = "NODE-FRA-01";
 let isSimulationPlaying = true;
+
+export function applyTileLayer(providerKey, apiKey = "", customUrl = "") {
+  if (!mapInstance) return;
+
+  const keyToUse = providerKey || localStorage.getItem("tracex_map_provider") || "carto-dark";
+  const provider = TILE_PROVIDERS[keyToUse] || TILE_PROVIDERS["carto-dark"];
+
+  if (currentTileLayer) {
+    try {
+      mapInstance.removeLayer(currentTileLayer);
+    } catch (e) {
+      console.warn("Could not remove existing tile layer", e);
+    }
+    currentTileLayer = null;
+  }
+
+  let finalUrl = provider.url;
+  if (keyToUse === "custom") {
+    finalUrl = customUrl || localStorage.getItem("tracex_map_custom_url") || TILE_PROVIDERS["carto-dark"].url;
+  } else if (provider.requiresKey) {
+    const key = apiKey || localStorage.getItem("tracex_map_api_key") || "";
+    if (!key) {
+      pushToast(`API Key required for ${provider.name}. Switched to failsafe Esri Dark layer.`, "error");
+      applyTileLayer("esri-dark");
+      return;
+    }
+    finalUrl = finalUrl.replace("{API_KEY}", encodeURIComponent(key));
+  }
+
+  const options = {
+    maxZoom: provider.maxZoom || 19,
+    detectRetina: true
+  };
+  if (provider.subdomains) {
+    options.subdomains = provider.subdomains;
+  }
+
+  currentTileLayer = L.tileLayer(finalUrl, options);
+
+  // Attach failsafe auto-fallback handler
+  currentTileLayer.on("tileerror", () => {
+    if (keyToUse !== "esri-dark") {
+      console.warn(`Tile load failure on ${provider.name}. Reverting to failsafe Esri Dark Canvas.`);
+      applyTileLayer("esri-dark");
+    }
+  });
+
+  currentTileLayer.addTo(mapInstance);
+}
+
+export function openMapSettingsModal() {
+  const currentProvider = localStorage.getItem("tracex_map_provider") || "carto-dark";
+  const currentApiKey = localStorage.getItem("tracex_map_api_key") || "";
+  const currentCustomUrl = localStorage.getItem("tracex_map_custom_url") || "";
+
+  const providersHtml = Object.entries(TILE_PROVIDERS).map(([key, p]) => `
+    <div class="tile-provider-card ${key === currentProvider ? "active" : ""}" data-provider-key="${key}">
+      <div class="provider-card-top">
+        <span class="provider-name">${escapeHtml(p.name)}</span>
+        <span class="provider-badge ${p.requiresKey ? "key" : "free"}">${p.badge}</span>
+      </div>
+      <p class="provider-desc">${escapeHtml(p.description)}</p>
+    </div>
+  `).join("");
+
+  const content = `
+    <div class="modal-header">
+      <div>
+        <span class="eyebrow"><i class="active-pulse cyan" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#5dd9db;box-shadow:0 0 8px #5dd9db;margin-right:6px;"></i>GEO-SPATIAL MAP ENGINE CONFIGURATION</span>
+        <h2>Map Tile Providers & API Key Manager</h2>
+      </div>
+      <button class="icon-button" id="btnCloseMapOverlay" aria-label="Close modal">${icon("x")}</button>
+    </div>
+
+    <div class="map-config-modal-body">
+      <div class="map-config-banner">
+        ${icon("shield-check")}
+        <div>
+          <strong>Tactical Tile Engine:</strong> Zero-key defense dark tiles (<strong>CARTO Dark Matter</strong> & <strong>Esri Dark Canvas</strong>) are active out-of-the-box with zero configuration required. If you wish to use <strong>Mapbox</strong>, <strong>MapTiler</strong>, or <strong>Stadia Maps</strong>, enter your custom API key below to unlock vector satellite and dark navigation layers.
+        </div>
+      </div>
+
+      <div class="tile-providers-grid" id="tileProvidersGrid">
+        ${providersHtml}
+      </div>
+
+      <div class="api-key-input-box">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+          <span class="form-label" style="margin-bottom:0;">${icon("key")} MAP SERVICE API KEY / ACCESS TOKEN</span>
+          <span style="font-size:10px;color:var(--cyan);font-family:var(--mono);">
+            Free key links: 
+            <a href="https://account.mapbox.com/auth/signup/" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:underline;margin-right:6px;">Mapbox</a>
+            <a href="https://cloud.maptiler.com/auth/signup/" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:underline;">MapTiler</a>
+          </span>
+        </div>
+        <input type="text" id="mapApiKeyInput" class="form-input code-font" placeholder="e.g. pk.eyJ1IjoiYWRtaW4iLC..." value="${escapeHtml(currentApiKey)}" />
+        <span class="form-hint">Tip: <strong>CARTO Dark Matter</strong> and <strong>Esri Dark Canvas</strong> require <u>NO API KEY</u> and work 100% free right now.</span>
+
+        <label class="form-group full" id="mapCustomUrlGroup" style="margin-top:10px; display:${currentProvider === "custom" ? "flex" : "none"};">
+          <span class="form-label">${icon("globe")} CUSTOM TILE SERVER URL TEMPLATE</span>
+          <input type="text" id="mapCustomUrlInput" class="form-input code-font" placeholder="https://{s}.tiles.yourserver.com/{z}/{x}/{y}.png" value="${escapeHtml(currentCustomUrl)}" />
+          <span class="form-hint">Standard TMS format with {z}, {x}, {y} placeholders.</span>
+        </label>
+      </div>
+
+      <div class="modal-actions" style="margin-top:16px;padding:0;">
+        <button type="button" class="button button-secondary" id="btnCancelMapConfig">Cancel</button>
+        <button type="button" class="button button-glow" id="btnSaveMapConfig">
+          ${icon("check-circle-2")} Save & Apply Map Layer
+        </button>
+      </div>
+    </div>
+  `;
+
+  const root = document.getElementById("overlay-root");
+  if (!root) return;
+  root.innerHTML = `<div class="overlay-backdrop" id="mapOverlayBackdrop"><div class="overlay-card modal-overlay map-config-modal is-open" role="dialog" aria-modal="true" data-overlay-card>${content}</div></div>`;
+  refreshMapIcons();
+
+  let selectedKey = currentProvider;
+
+  // Handle provider selection
+  const grid = document.getElementById("tileProvidersGrid");
+  if (grid) {
+    grid.addEventListener("click", (e) => {
+      const card = e.target.closest(".tile-provider-card");
+      if (!card) return;
+      grid.querySelectorAll(".tile-provider-card").forEach((c) => c.classList.remove("active"));
+      card.classList.add("active");
+      selectedKey = card.dataset.providerKey;
+
+      const customGroup = document.getElementById("mapCustomUrlGroup");
+      if (customGroup) {
+        customGroup.style.display = selectedKey === "custom" ? "flex" : "none";
+      }
+
+      const p = TILE_PROVIDERS[selectedKey];
+      const keyInput = document.getElementById("mapApiKeyInput");
+      if (keyInput && p.keyPlaceholder) {
+        keyInput.placeholder = p.keyPlaceholder;
+      }
+    });
+  }
+
+  // Handle Close
+  const closeBtn = document.getElementById("btnCloseMapOverlay");
+  const cancelBtn = document.getElementById("btnCancelMapConfig");
+  const backdrop = document.getElementById("mapOverlayBackdrop");
+  const close = () => { root.innerHTML = ""; };
+  if (closeBtn) closeBtn.addEventListener("click", close);
+  if (cancelBtn) cancelBtn.addEventListener("click", close);
+  if (backdrop) backdrop.addEventListener("click", (e) => {
+    if (e.target === backdrop) close();
+  });
+
+  // Handle Save
+  const saveBtn = document.getElementById("btnSaveMapConfig");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
+      const apiKeyVal = document.getElementById("mapApiKeyInput")?.value.trim() || "";
+      const customUrlVal = document.getElementById("mapCustomUrlInput")?.value.trim() || "";
+
+      localStorage.setItem("tracex_map_provider", selectedKey);
+      if (apiKeyVal) localStorage.setItem("tracex_map_api_key", apiKeyVal);
+      if (customUrlVal) localStorage.setItem("tracex_map_custom_url", customUrlVal);
+
+      applyTileLayer(selectedKey, apiKeyVal, customUrlVal);
+      close();
+      pushToast(`Map tile layer updated to ${TILE_PROVIDERS[selectedKey]?.name || selectedKey}!`, "success");
+    });
+  }
+}
 
 export function renderThreatMapPage() {
   const criticalCount = threatNodes.filter((n) => n.severity === "CRITICAL").length;
@@ -335,6 +719,9 @@ export function renderThreatMapPage() {
         </div>
 
         <div class="hud-actions">
+          <button class="button button-secondary button-sm" id="btnMapConfig" title="Configure Map Tiles & API Key">
+            ${icon("settings")} <span>MAP TILES & API KEY</span>
+          </button>
           <button class="button button-secondary button-sm" id="btnToggleSim" title="Pause or Resume Trajectory Pulse">
             ${icon("play")} <span>LIVE STREAM</span>
           </button>
@@ -482,6 +869,8 @@ function renderInspectorContent(node) {
   `;
 }
 
+let resizeHandler = null;
+
 export function initThreatMap() {
   const container = document.getElementById("threatLeafletMap");
   if (!container) return;
@@ -503,12 +892,8 @@ export function initThreatMap() {
     worldCopyJump: true
   });
 
-  // Dark Tactical CartoDB Tiles (free, fast, defense-grade dark UI)
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    subdomains: "abcd",
-    maxZoom: 19,
-    detectRetina: true
-  }).addTo(mapInstance);
+  // Apply configured or failsafe Dark Tiles
+  applyTileLayer(localStorage.getItem("tracex_map_provider") || "carto-dark");
 
   // Tactical Zoom Control in top-right
   L.control.zoom({ position: "topright" }).addTo(mapInstance);
@@ -523,6 +908,19 @@ export function initThreatMap() {
   startArcPulseAnimation();
   startTelemetryFeed();
   setupEventListeners();
+
+  // Handle map resizing and tile calculation
+  resizeHandler = () => {
+    if (mapInstance) mapInstance.invalidateSize();
+  };
+  window.addEventListener("resize", resizeHandler);
+
+  setTimeout(() => {
+    if (mapInstance) mapInstance.invalidateSize();
+    refreshMapIcons();
+  }, 150);
+
+  refreshMapIcons();
 }
 
 function renderMarkers() {
@@ -666,7 +1064,13 @@ function startTelemetryFeed() {
     { entity: "MARKET-NODE-11", city: "Dubai", text: "P2P escrow liquidity burst flagged for review", sev: "HIGH", id: "NODE-DXB-08" },
     { entity: "DELTA-22", city: "Bucharest", text: "Port 443 scanning wave originated from M247 subnet", sev: "HIGH", id: "NODE-BUC-09" },
     { entity: "RELAY-NODE-14", city: "Mumbai", text: "Encrypted Wireguard tunnel linked with Frankfurt C2", sev: "HIGH", id: "NODE-MUM-12" },
-    { entity: "NORTH-ROUTE-12", city: "Amsterdam", text: "Optical transit packet correlation confirmed", sev: "HIGH", id: "NODE-AMS-14" }
+    { entity: "NORTH-ROUTE-12", city: "Amsterdam", text: "Optical transit packet correlation confirmed", sev: "HIGH", id: "NODE-AMS-14" },
+    { entity: "ZETA-88", city: "Stockholm", text: "Failover C2 database snapshot synchronized via encrypted pipeline", sev: "HIGH", id: "NODE-STK-15" },
+    { entity: "ORION-HUB-01", city: "Toronto", text: "OAuth2 authentication token replay attack intercepted", sev: "HIGH", id: "NODE-TOR-16" },
+    { entity: "MARKET-NODE-08", city: "Hong Kong", text: "High-frequency Monero dark pool conversion transaction verified", sev: "CRITICAL", id: "NODE-HKG-17" },
+    { entity: "SOURCE-05", city: "Tel Aviv", text: "Zero-day payload signature intercepted on banking honeypot", sev: "MEDIUM", id: "NODE-TLV-18" },
+    { entity: "KAPPA-09", city: "Johannesburg", text: "Subsea fiber optical metadata matched Operation Orion handshake", sev: "MEDIUM", id: "NODE-JNB-19" },
+    { entity: "SOURCE-07", city: "Madrid", text: "Iberian fast-flux proxy rotation flagged by network heuristics", sev: "MEDIUM", id: "NODE-MAD-20" }
   ];
 
   const feedScroll = document.getElementById("telemetryFeedScroll");
@@ -716,10 +1120,12 @@ function selectMapNode(nodeId, flyTo = true) {
   const node = threatNodes.find((n) => n.id === nodeId);
   if (!node) return;
 
-  // Update Inspector Drawer
+  // Update and reveal Inspector Drawer
   const inspector = document.getElementById("mapInspectorDrawer");
   if (inspector) {
+    inspector.classList.remove("collapsed");
     inspector.innerHTML = renderInspectorContent(node);
+    refreshMapIcons();
   }
 
   // Highlight Marker in DOM
@@ -794,6 +1200,14 @@ function setupEventListeners() {
     });
   }
 
+  // Map Tile & API Key configuration modal
+  const configBtn = document.getElementById("btnMapConfig");
+  if (configBtn) {
+    configBtn.addEventListener("click", () => {
+      openMapSettingsModal();
+    });
+  }
+
   // Reset map view
   const resetBtn = document.getElementById("btnResetMap");
   if (resetBtn) {
@@ -841,6 +1255,7 @@ function setupEventListeners() {
       const evBtn = e.target.closest("#btnInspectorEvidence");
       if (evBtn) {
         const nodeId = evBtn.dataset.nodeId;
+        recordAuditEvent("GEO_EVIDENCE_LOGGED", "threat_map", nodeId);
         pushToast(`Geolocation evidence logged for ${nodeId} · SHA-256 verified`, "success");
       }
     });
@@ -855,6 +1270,10 @@ export function destroyThreatMap() {
   if (telemetryTimer) {
     clearInterval(telemetryTimer);
     telemetryTimer = null;
+  }
+  if (resizeHandler) {
+    window.removeEventListener("resize", resizeHandler);
+    resizeHandler = null;
   }
   if (mapInstance) {
     mapInstance.remove();

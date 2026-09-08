@@ -1,0 +1,69 @@
+{
+  "name": "GhostNet & Syndicate Alpha [Intel Dump]",
+  "type": "public_channel",
+  "id": 99881122,
+  "messages": [
+    {
+      "id": 201,
+      "type": "message",
+      "date": "2026-03-05T08:12:40",
+      "from": "Krypton_Broker",
+      "from_id": "user_kp99",
+      "text": "URGENT: Northern transit consignment loaded. For consignment tracking key, message @ghost_courier_99 or ping secure SIM line +919876501234. Target delivery batch code: METHA-BATCH-88."
+    },
+    {
+      "id": 202,
+      "type": "message",
+      "date": "2026-03-05T09:40:15",
+      "from": "HawalaDesk_Global",
+      "from_id": "user_hw82",
+      "text": "Escrow clearance required for Transaction #TX-9012. Send ₹850,000 equivalent in USDT to TRC20 wallet 0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE. Release confirmation to @tracex_relay_01."
+    },
+    {
+      "id": 203,
+      "type": "message",
+      "date": "2026-03-05T12:05:30",
+      "from": "Orion_Dispatcher",
+      "from_id": "user_orion03",
+      "text": "Route update: Sector 44 bypass is compromised. Re-routing consignment to Warehouse Node 7. Signal coordinator @alpha_nexus_operator on Telegram or call emergency burner +919122334455."
+    },
+    {
+      "id": 204,
+      "type": "message",
+      "date": "2026-03-06T07:30:20",
+      "from": "DarkMatrix_Escrow",
+      "from_id": "user_dm11",
+      "text": [
+        "Payment confirmed for contraband parcel #CP-4401. Deposited $22,500 into multisig wallet ",
+        {"type": "mention", "text": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"},
+        ". Handover scheduled with ",
+        {"type": "mention", "text": "@vector_logistics_x"},
+        " upon arrival."
+      ]
+    },
+    {
+      "id": 205,
+      "type": "message",
+      "date": "2026-03-06T11:15:00",
+      "from": "CyberShield_Leak",
+      "from_id": "user_cs90",
+      "text": "Confidential drop point data leaked: Drop location coordinates 28.6139° N, 77.2090° E. Mule account handler @shadow_mule_in handling cash pickups. Minimum token ₹150,000."
+    },
+    {
+      "id": 206,
+      "type": "message",
+      "date": "2026-03-06T15:20:10",
+      "from": "Stealth_Node_Admin",
+      "from_id": "user_st77",
+      "text": "Encrypted communication relay node active. Forward all PGP inquiries to operator contact@darkreach-vault.net or ping Telegram direct @stealth_node_admin."
+    },
+    {
+      "id": 207,
+      "type": "message",
+      "date": "2026-03-07T10:05:45",
+      "from": "ApexFin_Operator",
+      "from_id": "user_af44",
+      "text": "Settlement of $48,000 cleared for cross-border logistics. Verified transaction to BTC/ETH address 0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B. Awaiting green signal from @apex_supervisor."
+    }
+  ]
+}

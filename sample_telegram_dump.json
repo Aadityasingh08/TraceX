@@ -1,0 +1,51 @@
+{
+  "name": "DarkMarket & Contraband Intel [Export]",
+  "type": "public_channel",
+  "id": 1098234721,
+  "messages": [
+    {
+      "id": 101,
+      "type": "message",
+      "date": "2026-03-01T10:15:30",
+      "from": "SilentGhost_Admin",
+      "from_id": "user109283",
+      "text": "New stock arrived in Northern Corridor. Contact @phantom_operator or WhatsApp on +919876543210 for bulk consignment orders. Minimum order ₹250,000."
+    },
+    {
+      "id": 102,
+      "type": "message",
+      "date": "2026-03-01T11:22:15",
+      "from": "CryptoEscrow_Bot",
+      "from_id": "user883921",
+      "text": "Payment received for Deal #9921. Escrow deposit verified to wallet 0x71C845173250E3ADC10492651B4F4697F8769211 for $15,000 USDT. Releasing dispatch confirmation to @alpha_courier_17."
+    },
+    {
+      "id": 103,
+      "type": "message",
+      "date": "2026-03-01T14:45:00",
+      "from": "NexusRelay",
+      "from_id": "user301928",
+      "text": "Alert: Route checkpoint active near Sector 12 highway. Diverting drop-off location. Contact dispatcher on secure line +919811223344 or protonmail drop alert@nexus-intel.org."
+    },
+    {
+      "id": 104,
+      "type": "message",
+      "date": "2026-03-02T09:10:12",
+      "from": "DarkTrader_VIP",
+      "from_id": "user440219",
+      "text": [
+        "Special consignment ready: High grade synthetic batch. Forwarding to partner network. Ping ",
+        {"type": "mention", "text": "@shadow_broker_99"},
+        " for private key and PGP handshake. Price ₹500,000 per crate."
+      ]
+    },
+    {
+      "id": 105,
+      "type": "message",
+      "date": "2026-03-02T16:30:45",
+      "from": "OrionNode_Relay",
+      "from_id": "user771029",
+      "text": "Escrow transfer confirmed. Hash ID: tx_8849201. Escrow address 0x3F5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE. Funds $8,500 locked pending delivery verification."
+    }
+  ]
+}

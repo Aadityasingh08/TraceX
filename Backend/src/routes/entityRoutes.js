@@ -1,9 +1,10 @@
 import express from "express";
 import { getEntities, getEntity, getEntityScore, getEntityMatches, getEntityNetworkMetrics, createEntity } from "../controllers/entityController.js";
+import { validateCreateEntity } from "../middleware/validateRequest.js";
 
 const router = express.Router();
 router.get("/", getEntities);
-router.post("/", createEntity);
+router.post("/", validateCreateEntity, createEntity);
 router.get("/:id", getEntity);
 router.get("/:id/score", getEntityScore);
 router.get("/:id/matches", getEntityMatches);
