@@ -304,9 +304,41 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 *Disclaimer: TRACE-X is designed for cybersecurity intelligence, lawful investigations, and research. Automated correlations and AI scores represent investigative indicators for analyst review, not conclusive proof of criminal activity.*
 
+---
+
+## 👨‍💻 Architect & Lead Developer
+
 <div align="center">
 
-**Built for Modern Intelligence Fusion & Cyber Defense**  
-*TRACE-X Intelligence Platform · All Rights Reserved*
+### **Aditya Singh**
+*Full-Stack Engineer & Cyber Intelligence Systems Architect*
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect%20with%20Aditya-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/aditya-singh-392b9934b)
+[![Gmail](https://img.shields.io/badge/Email-adityasingh.as0608%40gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:adityasingh.as0608@gmail.com)
+[![GitHub](https://img.shields.io/badge/GitHub-Aadityasingh08-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Aadityasingh08)
+
+<br/>
+
+<table>
+  <tr>
+    <td align="center" width="650">
+      <br />
+      <h3>🚀 Crafted & Architected by <strong>Aditya Singh</strong></h3>
+      <p><em>"Building resilient, mission-critical intelligence fusion platforms, graph link architectures, and autonomous AI systems."</em></p>
+      <p>
+        🔗 <strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/aditya-singh-392b9934b">linkedin.com/in/aditya-singh-392b9934b</a> &nbsp;•&nbsp;
+        ✉️ <strong>Direct Contact:</strong> <a href="mailto:adityasingh.as0608@gmail.com">adityasingh.as0608@gmail.com</a>
+      </p>
+      <p>Open for impactful collaborations on Cyber Threat Intelligence, High-Scale Systems & AI Automation.</p>
+      <br />
+    </td>
+  </tr>
+</table>
+
+<br />
+
+**Built with precision for Modern Intelligence Fusion & Cyber Defense**  
+*TRACE-X Intelligence Platform · Engineered with ❤️ by Aditya Singh*
 
 </div>
+
