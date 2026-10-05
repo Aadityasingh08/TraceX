@@ -265,9 +265,9 @@ npm run dev
 ```
 
 #### Demo Credentials:
-- **Email:** `analyst@tracex.local`
-- **Password:** `analyst123`  
-*(Or simply click **QUICK DEMO ACCESS** on the login screen for instant clearance).*
+- **Analyst ID / Email:** `aditya` or `adityasingh.as0608@gmail.com` (or `analyst@tracex.local`)
+- **Password:** `analyst123` or `aditya123`  
+*(Or simply click **QUICK ACCESS: ADITYA SINGH** on the login screen for instant clearance).*
 
 ---
 
@@ -306,39 +306,50 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 👨‍💻 Architect & Lead Developer
+## 👥 Co-Creators & Lead Engineering Team
 
 <div align="center">
 
-### **Aditya Singh**
-*Full-Stack Engineer & Cyber Intelligence Systems Architect*
-
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect%20with%20Aditya-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/aditya-singh-392b9934b)
-[![Gmail](https://img.shields.io/badge/Email-adityasingh.as0608%40gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:adityasingh.as0608@gmail.com)
-[![GitHub](https://img.shields.io/badge/GitHub-Aadityasingh08-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Aadityasingh08)
+### **Jointly Architected & Developed by Aditya Singh & Bhawna Bhadana**
+*Engineered with precision for National Cyber Defense, High-Throughput Intelligence Fusion & Graph Telemetry*
 
 <br/>
 
 <table>
   <tr>
-    <td align="center" width="650">
-      <br />
-      <h3>🚀 Crafted & Architected by <strong>Aditya Singh</strong></h3>
+    <td align="center" width="50%" valign="top">
+      <br/>
+      <img src="https://github.com/Aadityasingh08.png" width="92" style="border-radius:50%; border:2px solid #5DD9DB;" alt="Aditya Singh" /><br/>
+      <h3><strong>Aditya Singh</strong></h3>
+      <p><b>Full-Stack Engineer & Cyber Intelligence Systems Architect</b></p>
       <p><em>"Building resilient, mission-critical intelligence fusion platforms, graph link architectures, and autonomous AI systems."</em></p>
       <p>
-        🔗 <strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/aditya-singh-392b9934b">linkedin.com/in/aditya-singh-392b9934b</a> &nbsp;•&nbsp;
-        ✉️ <strong>Direct Contact:</strong> <a href="mailto:adityasingh.as0608@gmail.com">adityasingh.as0608@gmail.com</a>
+        <a href="https://github.com/Aadityasingh08"><img src="https://img.shields.io/badge/GitHub-Aadityasingh08-181717?style=flat-square&logo=github&logoColor=white" /></a>
+        <a href="https://www.linkedin.com/in/aditya-singh-392b9934b"><img src="https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat-square&logo=linkedin&logoColor=white" /></a>
+        <a href="mailto:adityasingh.as0608@gmail.com"><img src="https://img.shields.io/badge/Email-adityasingh.as0608-EA4335?style=flat-square&logo=gmail&logoColor=white" /></a>
       </p>
-      <p>Open for impactful collaborations on Cyber Threat Intelligence, High-Scale Systems & AI Automation.</p>
-      <br />
+      <br/>
+    </td>
+    <td align="center" width="50%" valign="top">
+      <br/>
+      <img src="https://github.com/BhawnaBhadana.png" width="92" style="border-radius:50%; border:2px solid #5DD9DB;" alt="Bhawna Bhadana" /><br/>
+      <h3><strong>Bhawna Bhadana</strong></h3>
+      <p><b>Full-Stack Web Developer & Intelligence Platform Co-Creator</b></p>
+      <p><em>"Crafting high-performance investigative workflows, explainable data visualisations, and responsive analyst interfaces."</em></p>
+      <p>
+        <a href="https://github.com/BhawnaBhadana"><img src="https://img.shields.io/badge/GitHub-BhawnaBhadana-181717?style=flat-square&logo=github&logoColor=white" /></a>
+        <a href="https://linkedin.com"><img src="https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat-square&logo=linkedin&logoColor=white" /></a>
+        <a href="mailto:bhawnabhadana89@gmail.com"><img src="https://img.shields.io/badge/Email-bhawnabhadana89-EA4335?style=flat-square&logo=gmail&logoColor=white" /></a>
+      </p>
+      <br/>
     </td>
   </tr>
 </table>
 
-<br />
+<br/>
 
 **Built with precision for Modern Intelligence Fusion & Cyber Defense**  
-*TRACE-X Intelligence Platform · Engineered with ❤️ by Aditya Singh*
+*TRACE-X Intelligence Platform · Co-Engineered with ❤️ by Aditya Singh & Bhawna Bhadana*
 
 </div>
 
