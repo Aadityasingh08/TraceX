@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build",
-    "start": "cd Backend && npm start",
-    "server": "cd Backend && npm start"
+    "build": "cd Backend && npm install && cd ../frontend && npm install && npm run build",
+    "start": "node Backend/src/server.js",
+    "server": "node Backend/src/server.js",
+    "build:backend": "cd Backend && npm install",
+    "build:frontend": "cd frontend && npm install && npm run build"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

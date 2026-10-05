@@ -70,20 +70,34 @@ app.use("/api/audit-logs", auditRoutes);
 app.use("/api/ingestion", ingestionRoutes);
 app.use("/api/ai", aiRoutes);
 
+app.get("/healthz", (req, res) => res.status(200).send("OK"));
+
 app.use(notFound);
 app.use(errorHandler);
 
-const PORT = env.port;
-app.listen(PORT, () => {
-  logger.info(`🚀 TRACE-X backend running on port ${PORT}`);
+const PORT = Number(process.env.PORT) || env.port || 5000;
+const HOST = "0.0.0.0";
+
+const server = app.listen(PORT, HOST, () => {
+  logger.info(`🚀 TRACE-X backend running on http://${HOST}:${PORT}`);
 
   cron.schedule("*/15 * * * *", async () => {
     try {
+      if (!process.env.DATABASE_URL || (process.env.DATABASE_URL.includes("localhost") && (process.env.RENDER || process.env.VERCEL))) {
+        return;
+      }
       const ingested = await runIngestionCycle();
       logger.info(`Scheduled ingestion: ${ingested.length} new signal(s) processed`);
       await computeTrends();
     } catch (err) {
-      logger.error(`Scheduled ingestion/trend refresh failed: ${err.message}`);
+      logger.error(`Scheduled ingestion/trend refresh failed (non-fatal): ${err.message}`);
     }
   });
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.warn("Handled unhandledRejection (non-fatal):", reason?.message || reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("Handled uncaughtException (non-fatal):", err?.message || err);
 });
