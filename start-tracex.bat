@@ -25,6 +25,6 @@ start http://localhost:5173/
 echo ========================================================
 echo   TRACE-X is now running!
 echo   URL: http://localhost:5173/
-echo   Login: analyst@tracex.local / analyst123
+echo   Login: aditya / analyst123  (or adityasingh.as0608@gmail.com)
 echo ========================================================
 pause

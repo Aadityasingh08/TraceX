@@ -159,10 +159,10 @@ function renderLogin() {
       <div class="brand-lockup login-brand"><div class="brand-mark">${icon("orbit")}</div><div><strong>TRACE<span>-X</span></strong><small>INTELLIGENCE WORKSPACE</small></div></div>
       <div class="login-intro"><span class="eyebrow">SECURE ACCESS GATEWAY</span><h1>From fragmented signals<br><em>to actionable intelligence.</em></h1><p>Investigate relationships, patterns and evidence in one analyst-controlled workspace.</p></div>
       <form class="login-form" data-login-form>
-        <label>Email<input id="loginEmail" name="username" type="email" placeholder="you@agency.gov" value="analyst@tracex.local" autocomplete="username" required /></label>
+        <label>Analyst Username or Email<input id="loginEmail" name="username" type="text" placeholder="aditya or adityasingh.as0608@gmail.com" value="aditya" autocomplete="username" required /></label>
         <label>Password<div class="password-field"><input id="loginPassword" name="password" type="password" placeholder="••••••••" value="analyst123" autocomplete="current-password" required /><button type="button" class="icon-button" aria-label="Show password" data-action="toggle-password">${icon("eye")}</button></div></label>
         <button id="loginSubmitBtn" class="button button-primary button-wide" type="submit">${icon("log-in")} SIGN IN</button>
-        <button id="quickDemoBtn" class="button button-secondary button-wide" type="button" data-action="quick-demo-login" style="margin-top:6px;border-color:rgba(93,217,219,0.3);color:var(--cyan);">${icon("sparkles")} QUICK DEMO ACCESS (A. Patel · Analyst)</button>
+        <button id="quickDemoBtn" class="button button-secondary button-wide" type="button" data-action="quick-demo-login" style="margin-top:6px;border-color:rgba(93,217,219,0.3);color:var(--cyan);">${icon("sparkles")} QUICK ACCESS: ADITYA SINGH (Lead Analyst)</button>
         <div id="loginSecurityAlert" class="login-security-alert" style="display:none;"></div>
       </form>
       <p class="auth-switch">Don't have an account? <a href="#signup" data-route="signup">Create one</a></p>
@@ -1716,7 +1716,7 @@ function openNotifications() {
 }
 
 function openProfile() {
-  openOverlay(`<div class="profile-menu"><div class="profile-menu-header"><span class="avatar large">${appState.user.initials}</span><div><strong>${escapeHtml(appState.user.name)}</strong><small>${escapeHtml(appState.user.role)} · LIVE SESSION</small></div></div><div class="profile-menu-list"><button data-action="toggle-theme">${icon(appState.theme === "light" ? "moon" : "sun")} <span>Theme: <b>${appState.theme === "light" ? "Light" : "Dark"} Palette</b></span></button><button data-route="audit">${icon("scroll-text")} Audit trail</button><button data-action="workspace-status">${icon("shield-check")} System status <span class="status-live-text">Operational</span></button><button data-action="signout">${icon("log-out")} Return to access gateway</button></div></div>`, "profile-overlay");
+  openOverlay(`<div class="profile-menu"><div class="profile-menu-header"><span class="avatar large">${appState.user.initials}</span><div><strong>${escapeHtml(appState.user.name)}</strong><small>${escapeHtml(appState.user.role)} · LIVE SESSION</small>${appState.user.email ? `<span style="font-size:11px;color:var(--text-2);display:block;margin-top:2px;">${escapeHtml(appState.user.email)}</span>` : ""}</div></div><div class="profile-menu-list"><button data-action="toggle-theme">${icon(appState.theme === "light" ? "moon" : "sun")} <span>Theme: <b>${appState.theme === "light" ? "Light" : "Dark"} Palette</b></span></button><button data-route="audit">${icon("scroll-text")} Audit trail</button><button data-action="workspace-status">${icon("shield-check")} System status <span class="status-live-text">Operational</span></button><button data-action="signout">${icon("log-out")} Switch user / Sign out</button></div></div>`, "profile-overlay");
 }
 
 async function handleAction(action, element) {
@@ -1774,6 +1774,10 @@ async function handleAction(action, element) {
     case "clear-notifications": clearUnreadNotifications(); openNotifications(); break;
     case "workspace-status": pushToast("All services operational", "success"); break;
     case "quick-demo-login": {
+      const emailInput = document.getElementById("loginEmail");
+      const passwordInput = document.getElementById("loginPassword");
+      if (emailInput) emailInput.value = "aditya";
+      if (passwordInput) passwordInput.value = "analyst123";
       const form = document.querySelector("[data-login-form]");
       if (form) {
         form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
@@ -2041,7 +2045,13 @@ document.addEventListener("submit", async (event) => {
     localStorage.setItem("tracex_token", token);
     localStorage.setItem("tracex_user", JSON.stringify(user));
     setState({
-      user: { name: user.name, role: user.role.toUpperCase(), initials: initials(user.name) },
+      user: {
+        id: user.id,
+        name: user.name,
+        role: (user.role || "ANALYST").toUpperCase(),
+        initials: initials(user.name),
+        email: user.email || ""
+      },
       demoMode: false,
     });
     dataLoaded = false;
@@ -2073,17 +2083,28 @@ document.addEventListener("submit", async (event) => {
     } else {
       // If backend is unreachable (e.g. hosted on Vercel), provide seamless demo login
       if (!err.status && (err.message?.includes("fetch") || err.message?.includes("Network") || err.message?.includes("reach") || err.message?.includes("5000"))) {
-        const fallbackUser = { id: 1, name: "A. Patel", email: email || "analyst@tracex.local", role: "INVESTIGATOR" };
+        let cleanName = "Aditya Singh";
+        if (email) {
+          const raw = email.includes("@") ? email.split("@")[0] : email;
+          cleanName = raw.replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).trim() || "Aditya Singh";
+        }
+        const fallbackUser = { id: 2, name: cleanName, email: email || "adityasingh.as0608@gmail.com", role: "LEAD ANALYST" };
         localStorage.setItem("tracex_token", "demo-token-" + Date.now());
         localStorage.setItem("tracex_user", JSON.stringify(fallbackUser));
         setState({
-          user: { name: fallbackUser.name, role: fallbackUser.role, initials: "AP" },
+          user: {
+            id: fallbackUser.id,
+            name: fallbackUser.name,
+            role: fallbackUser.role,
+            initials: initials(fallbackUser.name),
+            email: fallbackUser.email
+          },
           demoMode: true,
         });
         dataLoaded = false;
         navigate("dashboard");
         loadData();
-        pushToast("Connected to TRACE-X Intelligence Workspace (Live Demo)", "success");
+        pushToast(`Connected as ${fallbackUser.name}`, "success");
         return;
       }
       if (alertEl) {
@@ -2215,6 +2236,22 @@ if (!storedToken) {
     renderApp();
   }
 } else {
+  try {
+    const raw = localStorage.getItem("tracex_user");
+    if (raw) {
+      const u = JSON.parse(raw);
+      if (u && (u.name || u.email)) {
+        appState.user = {
+          id: u.id,
+          name: u.name || "Aditya Singh",
+          role: (u.role || "ANALYST").toUpperCase(),
+          initials: u.initials || initials(u.name || "Aditya Singh"),
+          email: u.email || "",
+        };
+      }
+    }
+  } catch (_) {}
+
   if (!window.location.hash || initialRoute === "login" || initialRoute === "signup") {
     navigate("dashboard");
   }

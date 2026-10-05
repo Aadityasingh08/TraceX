@@ -4,9 +4,10 @@
  */
 
 export function validateLogin(req, res, next) {
-  const { email, password } = req.body || {};
-  if (!email || typeof email !== "string" || !email.trim()) {
-    return res.status(400).json({ success: false, message: "Valid email address is required" });
+  const { email, username, password } = req.body || {};
+  const identifier = email || username;
+  if (!identifier || typeof identifier !== "string" || !identifier.trim()) {
+    return res.status(400).json({ success: false, message: "Valid email or username is required" });
   }
   if (!password || typeof password !== "string" || !password.trim()) {
     return res.status(400).json({ success: false, message: "Password is required" });

@@ -7,7 +7,7 @@ import { validateLogin, validateRegister } from "../middleware/validateRequest.j
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes window
-  max: 30, // limit each IP to 30 requests per windowMs
+  max: 100, // relaxed limit for analyst environment
   standardHeaders: true,
   legacyHeaders: false,
   message: {

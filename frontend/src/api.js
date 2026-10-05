@@ -11,11 +11,11 @@ export function recordAuditEvent(action, resource, resourceId = null, actor = nu
       const stored = localStorage.getItem("tracex_user");
       if (stored) {
         const u = JSON.parse(stored);
-        userActor = u.name || "A. Patel";
+        userActor = u.name || "Aditya Singh";
       }
     } catch (_) {}
   }
-  if (!userActor) userActor = "A. Patel";
+  if (!userActor) userActor = "Aditya Singh";
 
   const entry = {
     id: `AUD-${Date.now().toString().slice(-4)}`,

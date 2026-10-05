@@ -12,7 +12,7 @@ export async function protect(req, res, next) {
     return res.status(401).json({ success: false, message: "Not authorized, no token" });
   }
   if (token === "demo-session-token") {
-    req.user = { id: 1, name: "A. Patel", email: "analyst@tracex.local", role: "INVESTIGATOR" };
+    req.user = { id: 2, name: "Aditya Singh", email: "adityasingh.as0608@gmail.com", role: "ANALYST" };
     return next();
   }
   try {
@@ -22,13 +22,13 @@ export async function protect(req, res, next) {
       [decoded.id]
     );
     if (result.rows.length === 0) {
-      req.user = { id: decoded.id || 1, name: decoded.name || "A. Patel", email: decoded.email || "analyst@tracex.local", role: decoded.role || "INVESTIGATOR" };
+      req.user = { id: decoded.id || 2, name: decoded.name || "Aditya Singh", email: decoded.email || "adityasingh.as0608@gmail.com", role: decoded.role || "ANALYST" };
       return next();
     }
     req.user = result.rows[0];
     next();
   } catch (err) {
-    req.user = { id: 1, name: "A. Patel", email: "analyst@tracex.local", role: "INVESTIGATOR" };
+    req.user = { id: 2, name: "Aditya Singh", email: "adityasingh.as0608@gmail.com", role: "ANALYST" };
     next();
   }
 }

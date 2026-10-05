@@ -221,18 +221,18 @@ export const categories = [
 ];
 
 export const demoAuditLogs = [
-  { id: "AUD-101", actor: "A. Patel", action: "VERIFY_SIGNAL", resource: "alerts", resourceId: "ALERT-009", timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString() },
+  { id: "AUD-101", actor: "Aditya Singh", action: "VERIFY_SIGNAL", resource: "alerts", resourceId: "ALERT-009", timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString() },
   { id: "AUD-102", actor: "TRACE-X AI", action: "CROSS_SOURCE_CORRELATION", resource: "entity", resourceId: "ALPHA-17", timestamp: new Date(Date.now() - 7 * 60 * 1000).toISOString() },
-  { id: "AUD-103", actor: "A. Patel", action: "GEO_EVIDENCE_LOGGED", resource: "threat_map", resourceId: "NODE-FRA-01", timestamp: new Date(Date.now() - 14 * 60 * 1000).toISOString() },
+  { id: "AUD-103", actor: "Aditya Singh", action: "GEO_EVIDENCE_LOGGED", resource: "threat_map", resourceId: "NODE-FRA-01", timestamp: new Date(Date.now() - 14 * 60 * 1000).toISOString() },
   { id: "AUD-104", actor: "TRACE-X AI", action: "C2_BEACON_DETECTED", resource: "threat_node", resourceId: "NODE-REYK-02", timestamp: new Date(Date.now() - 28 * 60 * 1000).toISOString() },
-  { id: "AUD-105", actor: "A. Patel", action: "INGEST_TARGET", resource: "entity", resourceId: "ORION-NODE-03", timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString() },
+  { id: "AUD-105", actor: "Aditya Singh", action: "INGEST_TARGET", resource: "entity", resourceId: "ORION-NODE-03", timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString() },
   { id: "AUD-106", actor: "TRACE-X AI", action: "SHA256_INTEGRITY_ANCHORED", resource: "evidence", resourceId: "EVD-0087", timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString() },
-  { id: "AUD-107", actor: "A. Patel", action: "GENERATE_REPORT", resource: "report", resourceId: "OPERATION-ORION", timestamp: new Date(Date.now() - 95 * 60 * 1000).toISOString() },
+  { id: "AUD-107", actor: "Aditya Singh", action: "GENERATE_REPORT", resource: "report", resourceId: "OPERATION-ORION", timestamp: new Date(Date.now() - 95 * 60 * 1000).toISOString() },
   { id: "AUD-108", actor: "TRACE-X AI", action: "COMMUNITY_CLUSTER_UPDATE", resource: "network", resourceId: "Cluster 01", timestamp: new Date(Date.now() - 130 * 60 * 1000).toISOString() },
-  { id: "AUD-109", actor: "A. Patel", action: "ACKNOWLEDGE_ALERT", resource: "alerts", resourceId: "ALERT-002", timestamp: new Date(Date.now() - 180 * 60 * 1000).toISOString() },
+  { id: "AUD-109", actor: "Aditya Singh", action: "ACKNOWLEDGE_ALERT", resource: "alerts", resourceId: "ALERT-002", timestamp: new Date(Date.now() - 180 * 60 * 1000).toISOString() },
   { id: "AUD-110", actor: "TRACE-X AI", action: "INGESTION_CYCLE_COMPLETE", resource: "pipeline", resourceId: "BATCH-841", timestamp: new Date(Date.now() - 240 * 60 * 1000).toISOString() },
-  { id: "AUD-111", actor: "A. Patel", action: "EXPORT_EVIDENCE_INDEX", resource: "evidence", resourceId: "EVD-INDEX-ALL", timestamp: new Date(Date.now() - 320 * 60 * 1000).toISOString() },
+  { id: "AUD-111", actor: "Aditya Singh", action: "EXPORT_EVIDENCE_INDEX", resource: "evidence", resourceId: "EVD-INDEX-ALL", timestamp: new Date(Date.now() - 320 * 60 * 1000).toISOString() },
   { id: "AUD-112", actor: "TRACE-X AI", action: "ANOMALOUS_TRAFFIC_BURST", resource: "threat_node", resourceId: "NODE-MUM-12", timestamp: new Date(Date.now() - 410 * 60 * 1000).toISOString() },
-  { id: "AUD-113", actor: "A. Patel", action: "REJECT_ENTITY_MATCH", resource: "entity", resourceId: "DELTA-22", timestamp: new Date(Date.now() - 520 * 60 * 1000).toISOString() },
+  { id: "AUD-113", actor: "Aditya Singh", action: "REJECT_ENTITY_MATCH", resource: "entity", resourceId: "DELTA-22", timestamp: new Date(Date.now() - 520 * 60 * 1000).toISOString() },
   { id: "AUD-114", actor: "TRACE-X AI", action: "CRYPTO_ESCROW_ALERT_TRIGGERED", resource: "alerts", resourceId: "ALERT-011", timestamp: new Date(Date.now() - 650 * 60 * 1000).toISOString() }
 ];

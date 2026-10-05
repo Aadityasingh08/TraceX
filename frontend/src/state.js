@@ -1,7 +1,37 @@
 const listeners = new Set();
 
+export function getInitials(name) {
+  if (!name) return "AS";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length > 1) {
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
+
+function getInitialUser() {
+  try {
+    const raw = localStorage.getItem("tracex_user");
+    if (raw) {
+      const u = JSON.parse(raw);
+      if (u && (u.name || u.email)) {
+        const name = u.name || u.email.split("@")[0];
+        const role = (u.role || "LEAD ANALYST").toUpperCase();
+        return {
+          id: u.id,
+          name,
+          email: u.email || "",
+          role,
+          initials: u.initials || getInitials(name),
+        };
+      }
+    }
+  } catch (_) {}
+  return { name: "Aditya Singh", role: "LEAD ANALYST", initials: "AS", email: "adityasingh.as0608@gmail.com" };
+}
+
 export const appState = {
-  user: { name: "A. Patel", role: "INVESTIGATOR", initials: "AP" },
+  user: getInitialUser(),
   currentInvestigation: "OPERATION-ORION",
   selectedEntity: "ALPHA-17",
   selectedAlert: "ALERT-009",

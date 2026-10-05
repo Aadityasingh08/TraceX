@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bhawna - Full-Stack Web Developer Resume</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    @page {
+      size: letter;
+      margin: 0.30in 0.40in 0.28in 0.40in;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #111827;
+      background-color: #ffffff;
+      font-size: 9pt;
+      line-height: 1.28;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .resume-container {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    h1.name {
+      font-size: 19pt;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      color: #0f172a;
+      text-transform: uppercase;
+      margin-bottom: 1px;
+    }
+
+    .job-title {
+      font-size: 10pt;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 3px;
+    }
+
+    .contact-info {
+      font-size: 8.5pt;
+      color: #475569;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .contact-info a {
+      color: #0369a1;
+      text-decoration: none;
+    }
+
+    .contact-info a:hover {
+      text-decoration: underline;
+    }
+
+    .separator {
+      color: #94a3b8;
+    }
+
+    /* Section Styles */
+    section {
+      margin-top: 5px;
+    }
+
+    .section-title {
+      font-size: 9.3pt;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #0f4c81;
+      border-bottom: 1.4px solid #0f4c81;
+      padding-bottom: 1px;
+      margin-bottom: 3px;
+    }
+
+    /* Summary */
+    .summary-text {
+      text-align: justify;
+      color: #1f2937;
+      font-size: 8.7pt;
+      line-height: 1.28;
+    }
+
+    /* Technical Skills */
+    .skills-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5px;
+    }
+
+    .skill-row {
+      font-size: 8.7pt;
+      line-height: 1.25;
+      color: #1f2937;
+    }
+
+    .skill-category {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    /* Item Header: Title & Right Meta */
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 2.5px;
+      margin-bottom: 0px;
+    }
+
+    .item-title {
+      font-weight: 700;
+      font-size: 9pt;
+      color: #0f172a;
+    }
+
+    .item-subtitle {
+      font-size: 8.5pt;
+      color: #475569;
+      font-weight: 500;
+      margin-bottom: 1px;
+    }
+
+    .item-link {
+      font-size: 8.3pt;
+      font-weight: 500;
+      color: #0369a1;
+      text-decoration: none;
+    }
+
+    .item-link:hover {
+      text-decoration: underline;
+    }
+
+    .item-date {
+      font-size: 8.6pt;
+      font-weight: 700;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+
+    /* Bullet Points */
+    ul.bullet-list {
+      list-style-type: none;
+      padding-left: 0;
+      margin-top: 1px;
+      margin-bottom: 2px;
+    }
+
+    ul.bullet-list li {
+      position: relative;
+      padding-left: 11px;
+      margin-bottom: 1.5px;
+      color: #1f2937;
+      font-size: 8.6pt;
+      line-height: 1.27;
+      text-align: justify;
+    }
+
+    ul.bullet-list li::before {
+      content: "•";
+      position: absolute;
+      left: 1px;
+      top: 0px;
+      color: #0f172a;
+      font-weight: bold;
+    }
+
+    /* Education specifics */
+    .education-item {
+      margin-top: 2px;
+      margin-bottom: 1.5px;
+    }
+
+    .education-details {
+      font-size: 8.6pt;
+      color: #1f2937;
+      line-height: 1.25;
+    }
+
+    @media print {
+      body {
+        background: transparent;
+      }
+      .resume-container {
+        width: 100%;
+        max-width: none;
+      }
+      a {
+        color: #0369a1 !important;
+        text-decoration: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="resume-container">
+    <!-- Header -->
+    <header>
+      <h1 class="name">BHAWNA</h1>
+      <div class="job-title">Full-Stack Web Developer</div>
+      <div class="contact-info">
+        <span>+91 9996731939</span>
+        <span class="separator">|</span>
+        <span><a href="mailto:bhawnabhadana89@gmail.com">bhawnabhadana89@gmail.com</a></span>
+        <span class="separator">|</span>
+        <span>Delhi, India</span>
+        <span class="separator">|</span>
+        <span><a href="https://linkedin.com" target="_blank">LinkedIn</a></span>
+        <span class="separator">|</span>
+        <span><a href="https://github.com/BhawnaBhadana" target="_blank">GitHub</a></span>
+        <span class="separator">|</span>
+        <span><a href="#" target="_blank">Portfolio</a></span>
+      </div>
+    </header>
+
+    <!-- Professional Summary -->
+    <section>
+      <div class="section-title">PROFESSIONAL SUMMARY</div>
+      <p class="summary-text">
+        Full-stack developer pursuing B.S. (Hons) in Computer Applications (CGPA 9.02), with hands-on experience building and deploying production-grade MERN stack applications. Shipped two live full-stack platforms — an e-commerce SPA with Node.js/Express/MongoDB backend and an AI study assistant integrating the Groq API — plus two national hackathon projects: an AI intelligence-fusion platform for drug intelligence (Chandigarh Police Hackathon) and a disaster-relief platform recognised as a finalist across 10x competing teams. Seeking SDE/SWE Full-Stack and Backend roles.
+      </p>
+    </section>
+
+    <!-- Technical Skills -->
+    <section>
+      <div class="section-title">TECHNICAL SKILLS</div>
+      <div class="skills-grid">
+        <div class="skill-row">
+          <span class="skill-category">Languages:</span> JavaScript, Python, HTML5, CSS3, SQL
+        </div>
+        <div class="skill-row">
+          <span class="skill-category">Frontend:</span> React.js, Vite, Tailwind CSS
+        </div>
+        <div class="skill-row">
+          <span class="skill-category">Backend &amp; Databases:</span> Node.js, Express.js, REST API Design, MongoDB, PostgreSQL
+        </div>
+        <div class="skill-row">
+          <span class="skill-category">Python Libraries:</span> spaCy
+        </div>
+        <div class="skill-row">
+          <span class="skill-category">Tools &amp; Platforms:</span> Git, GitHub, Postman, Figma, VS Code, Vercel, Render, Groq API
+        </div>
+        <div class="skill-row">
+          <span class="skill-category">AI Tools:</span> ChatGPT, Claude, Groq, Gemini — prompt engineering, AI-assisted workflows
+        </div>
+        <div class="skill-row">
+          <span class="skill-category">Soft &amp; Research Skills:</span> Analytical Thinking, Research, Content Writing, Technical Documentation
+        </div>
+      </div>
+    </section>
+
+    <!-- Experience -->
+    <section>
+      <div class="section-title">EXPERIENCE</div>
+      <div>
+        <div class="item-header">
+          <div>
+            <span class="item-title">Web Developer Intern</span>
+          </div>
+          <div class="item-date">Jun '25 — Jul '25</div>
+        </div>
+        <div class="item-subtitle">CollegeTips.in · Remote</div>
+        <ul class="bullet-list">
+          <li>Built and shipped 8+ responsive, cross-browser web pages using HTML, CSS, and JavaScript, collaborating with the design team to translate Figma mockups into pixel-accurate, mobile-first layouts.</li>
+          <li>Optimised page markup and CSS for performance and accessibility, ensuring consistent rendering across Chrome, Firefox, Safari, and mobile viewports.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Projects -->
+    <section>
+      <div class="section-title">PROJECTS</div>
+
+      <!-- Project 1: Grace Era -->
+      <div>
+        <div class="item-header">
+          <div>
+            <span class="item-title">Grace Era</span> — <span style="font-weight: 500;">Full-Stack E-Commerce Platform</span>
+          </div>
+          <a class="item-link" href="https://grace-era.vercel.app" target="_blank">grace-era.vercel.app</a>
+        </div>
+        <ul class="bullet-list">
+          <li>Built a full-stack e-commerce SPA for women's fashion (Dresses, Blazers, Co-ord Sets, Tops, Jackets) with a Node.js/Express REST API and MongoDB, supporting product catalogue, dynamic cart, and end-to-end checkout.</li>
+          <li>Implemented JWT-based authentication and an admin dashboard with full CRUD for inventory and order management, order history, and category-filter search; fully responsive UI deployed live on Vercel.</li>
+        </ul>
+      </div>
+
+      <!-- Project 2: Nexora AI -->
+      <div>
+        <div class="item-header">
+          <div>
+            <span class="item-title">Nexora AI</span> — <span style="font-weight: 500;">All-in-One AI Study Assistant</span>
+          </div>
+          <a class="item-link" href="https://nexora-ai-beta-six.vercel.app" target="_blank">nexora-ai-beta-six.vercel.app</a>
+        </div>
+        <ul class="bullet-list">
+          <li>Integrated the Groq API to power 8+ AI features including doubt solving, AI notes generation, a code helper, mock test generator, and image-based question solving via a unified prompt-handling layer.</li>
+          <li>Built an AI Resume Builder, Career Guide Chatbot, and analytics dashboard with study heatmaps and weekly activity tracking; added free-tier usage gating with user authentication.</li>
+        </ul>
+      </div>
+
+      <!-- Project 3: TRACE-X -->
+      <div>
+        <div class="item-header">
+          <div>
+            <span class="item-title">TRACE-X</span> — <span style="font-weight: 500;">AI Drug-Intelligence Platform</span>
+          </div>
+          <a class="item-link" href="https://trace-x-zeta.vercel.app/#dashboard" target="_blank">trace-x-zeta.vercel.app</a>
+        </div>
+        <ul class="bullet-list">
+          <li>Led team CyberX as team leader in building an explainable intelligence-fusion platform for dark-web/encrypted-platform drug intelligence, submitted to the Chandigarh Police Hackathon 2026 (Problem Statement 3: DWID).</li>
+          <li>Built an 8-stage fusion pipeline (Fragment → Extract → Correlate → Connect → Detect → Explain → Verify → Report) with a Node.js/Express + PostgreSQL backend, NLP entity extraction, and a Neo4j graph layer, with RBAC and audit logging.</li>
+        </ul>
+      </div>
+
+      <!-- Project 4: Sahayta -->
+      <div>
+        <div class="item-header">
+          <div>
+            <span class="item-title">Sahayta</span> — <span style="font-weight: 500;">Real-Time Disaster Assistance Platform</span>
+          </div>
+        </div>
+        <ul class="bullet-list">
+          <li>Designed and developed a real-time disaster assistance web application connecting affected users with relief resources and responders; recognised as a finalist among 10x participating teams at a national-level hackathon for innovation and technical execution.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Achievements & Certifications -->
+    <section>
+      <div class="section-title">ACHIEVEMENTS &amp; CERTIFICATIONS</div>
+      <ul class="bullet-list">
+        <li><strong>10x National Hackathon Finalist</strong> — recognised across multiple competitions including HackTU 7.0 and Shield 1.0 (organised by the Ministry of Home Affairs), among others.</li>
+        <li><strong>Artificial Intelligence Certification</strong>, IBM via Coursera.</li>
+      </ul>
+    </section>
+
+    <!-- Education -->
+    <section>
+      <div class="section-title">EDUCATION</div>
+      <div class="education-item">
+        <div class="item-header">
+          <div>
+            <span class="item-title">B.S. (Hons) in Computer Applications</span>, <span>DSEU · Delhi</span>
+          </div>
+          <div class="item-date">2024 — 2028</div>
+        </div>
+        <div class="education-details">
+          <strong>CGPA: 9.02</strong> | <span>Relevant Coursework: OOP, Data Structures, API Design, Full-Stack Web Development</span>
+        </div>
+      </div>
+      <div class="education-item">
+        <div class="item-header">
+          <div>
+            <span class="item-title">Senior Secondary (Class XII)</span>, <span>Dharam Public School · Palwal, Haryana</span>
+          </div>
+          <div class="item-date">2023 — 2024</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+</body>
+</html>

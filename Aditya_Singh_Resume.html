@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aditya Singh - Full-Stack Web Developer Resume</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Open+Sans:wght@400;600;700&display=swap');
+
+    @page {
+      size: letter;
+      margin: 0.32in 0.44in 0.30in 0.44in;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Open Sans', Calibri, 'Segoe UI', sans-serif;
+      color: #111111;
+      background-color: #ffffff;
+      font-size: 8.8pt;
+      line-height: 1.28;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .resume-container {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 7px;
+    }
+
+    h1.name {
+      font-family: 'Merriweather', Georgia, serif;
+      font-size: 21pt;
+      font-weight: 700;
+      color: #1a365d;
+      margin-bottom: 2px;
+      letter-spacing: 0.2px;
+    }
+
+    .job-title {
+      font-size: 10.5pt;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 4px;
+    }
+
+    .contact-info {
+      font-size: 8.8pt;
+      color: #334155;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .contact-info a {
+      color: #0369a1;
+      text-decoration: underline;
+    }
+
+    .separator {
+      color: #64748b;
+    }
+
+    /* Section Styles */
+    section {
+      margin-top: 6px;
+    }
+
+    .section-title {
+      font-size: 9.6pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: #0f172a;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 1.5px;
+      margin-bottom: 3.5px;
+    }
+
+    /* Technical Skills */
+    .skills-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .skill-row {
+      font-size: 8.6pt;
+      line-height: 1.26;
+      color: #1e293b;
+    }
+
+    .skill-category {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    /* Project Item */
+    .project-item {
+      margin-bottom: 4px;
+    }
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 2px;
+      margin-bottom: 1px;
+    }
+
+    .project-title-line {
+      font-size: 8.8pt;
+      color: #0f172a;
+    }
+
+    .project-name {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .project-tech {
+      color: #475569;
+      font-style: italic;
+      font-size: 8.4pt;
+    }
+
+    .live-site-link {
+      font-size: 8.6pt;
+      font-weight: 600;
+      color: #0284c7;
+      text-decoration: underline;
+      margin-left: 4px;
+    }
+
+    /* Bullet lists */
+    ul.bullet-list {
+      list-style-type: disc;
+      padding-left: 15px;
+      margin-top: 1px;
+      margin-bottom: 2px;
+    }
+
+    ul.bullet-list li {
+      margin-bottom: 1px;
+      color: #1e293b;
+      font-size: 8.5pt;
+      line-height: 1.25;
+      text-align: justify;
+    }
+
+    /* Education items */
+    .edu-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 2px;
+      margin-bottom: 1px;
+    }
+
+    .edu-title {
+      font-weight: 700;
+      font-size: 8.8pt;
+      color: #0f172a;
+    }
+
+    .edu-date {
+      font-size: 8.6pt;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .edu-sub {
+      font-size: 8.4pt;
+      color: #334155;
+      margin-bottom: 1px;
+    }
+
+    /* Connect section */
+    .connect-row {
+      font-size: 8.6pt;
+      margin-top: 2px;
+      color: #1e293b;
+    }
+
+    .connect-row a {
+      color: #0369a1;
+      text-decoration: underline;
+    }
+
+    @media print {
+      body {
+        background: transparent;
+      }
+      .resume-container {
+        width: 100%;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="resume-container">
+    <!-- Header -->
+    <header>
+      <h1 class="name">Aditya Singh</h1>
+      <div class="job-title">Full-Stack Web Developer</div>
+      <div class="contact-info">
+        <span><a href="mailto:adityasingh.as0608@gmail.com">adityasingh.as0608@gmail.com</a></span>
+        <span class="separator">|</span>
+        <span>+91 99103 05506</span>
+        <span class="separator">|</span>
+        <span><a href="https://www.linkedin.com/in/aditya-singh-392b9934b/" target="_blank">LinkedIn</a></span>
+        <span class="separator">|</span>
+        <span><a href="https://github.com/Aadityasingh08" target="_blank">GitHub</a></span>
+        <span class="separator">|</span>
+        <span><a href="https://pportfolio-ten.vercel.app" target="_blank">Portfolio</a></span>
+      </div>
+    </header>
+
+    <!-- Technical Skills -->
+    <section>
+      <div class="section-title">TECHNICAL SKILLS</div>
+      <div class="skills-block">
+        <div class="skill-row">
+          <span class="skill-category">Languages:</span> JavaScript (Proficient), Python, HTML &amp; CSS (Proficient), MongoDB
+        </div>
+        <div class="skill-row">
+          <span class="skill-category">Frameworks:</span> Node.js, Express.js, Tailwind CSS
+        </div>
+        <div class="skill-row">
+          <span class="skill-category">AI &amp; Data:</span> Agentic AI concepts, AI assistance tools (ChatGPT, Claude, GitHub Copilot), Machine Learning / AI fundamentals, Data Handling &amp; Analysis, Exposure to ML libraries for data processing &amp; model building
+        </div>
+        <div class="skill-row">
+          <span class="skill-category">Tools:</span> Git &amp; GitHub, Postman, Figma, VS Code
+        </div>
+        <div class="skill-row">
+          <span class="skill-category">Competencies:</span> REST API Design, Responsive UI, Strong Analytical &amp; Problem-Solving Skills, Curiosity to Learn Emerging Technologies, Team Collaboration, Independent Delivery
+        </div>
+      </div>
+    </section>
+
+    <!-- Projects -->
+    <section>
+      <div class="section-title">PROJECTS</div>
+
+      <!-- Project 1: TraceX -->
+      <div class="project-item">
+        <div class="project-title-line">
+          <span class="project-name">TraceX – Cyber Intelligence Fusion Platform</span>
+          <span class="project-tech">React · Node.js · Express.js · PostgreSQL · AI Copilot</span>
+          <a class="live-site-link" href="https://trace-x-zeta.vercel.app/#dashboard" target="_blank">Live Site</a>
+        </div>
+        <ul class="bullet-list">
+          <li>Architected an intelligence fusion platform fusing multi-source raw signals (IP traffic, darknet intercepts, crypto ledgers) into unified dossiers.</li>
+          <li>Engineered dual-engine AI Copilot, interactive force-directed graph link analysis, and geospatial threat telemetry with chain-of-custody verification.</li>
+        </ul>
+      </div>
+
+      <!-- Project 2: Grace Era -->
+      <div class="project-item">
+        <div class="project-title-line">
+          <span class="project-name">Grace Era</span>
+          <span class="project-tech">HTML · CSS · JavaScript</span>
+          <a class="live-site-link" href="https://grace-era.vercel.app" target="_blank">Live Site</a>
+        </div>
+        <ul class="bullet-list">
+          <li>Built a complete e-commerce SPA for Western women's fashion — product catalogue, dynamic cart, and end-to-end checkout flow.</li>
+          <li>Admin dashboard with real-time inventory and order management (full CRUD); user auth, order history, and category filters.</li>
+          <li>Fully responsive across all screen sizes.</li>
+        </ul>
+      </div>
+
+      <!-- Project 3: Nexora AI -->
+      <div class="project-item">
+        <div class="project-title-line">
+          <span class="project-name">Nexora AI – All-in-One AI Study Assistant</span>
+          <span class="project-tech">HTML · CSS · JavaScript · AI APIs</span>
+          <a class="live-site-link" href="https://nexora-ai-beta-six.vercel.app" target="_blank">Live Site</a>
+        </div>
+        <ul class="bullet-list">
+          <li>Delivered 8+ AI-powered features: doubt solving, notes generation, code helper, mock test generator, image question solver, study planner.</li>
+          <li>Built an AI Resume Builder and Career Guide Chatbot; analytics dashboard with study heatmaps and weekly activity tracking.</li>
+          <li>Implemented free-plan tiering with user authentication.</li>
+        </ul>
+      </div>
+
+      <!-- Project 4: Sahayta Platform -->
+      <div class="project-item">
+        <div class="project-title-line">
+          <span class="project-name">Sahayta Platform</span>
+          <span class="project-tech">Real-time Disaster Assistance Web Application</span>
+        </div>
+        <ul class="bullet-list">
+          <li>Designed and developed a real-time disaster assistance web app; recognised for innovation and technical execution at a national hackathon.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Achievements & Recognition -->
+    <section>
+      <div class="section-title">ACHIEVEMENTS &amp; RECOGNITION</div>
+      <div style="margin-top: 2px;">
+        <div style="font-weight: 700; font-size: 8.8pt; color: #0f172a;">National Hackathon Finalist</div>
+        <ul class="bullet-list">
+          <li>Recognised across multiple national-level competitions in frontend development, backend engineering, and problem-solving.</li>
+        </ul>
+      </div>
+      <div style="margin-top: 2px;">
+        <div style="font-weight: 700; font-size: 8.8pt; color: #0f172a;">National Recognition – Sahayta Platform</div>
+        <ul class="bullet-list">
+          <li>Sahayta platform singled out for innovation and technical execution, receiving formal recognition from judges and organizers.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Education -->
+    <section>
+      <div class="section-title">EDUCATION</div>
+      <div>
+        <div class="edu-row">
+          <div class="edu-title">B.Sc. (Hons) in Computer Applications (BSCA)</div>
+          <div class="edu-date">2024 – 2028</div>
+        </div>
+        <div class="edu-sub">Delhi Skill &amp; Entrepreneurship University (DSEU), Delhi | <strong>CGPA: 8.85</strong></div>
+        <div style="font-size: 8.3pt; color: #334155; margin-bottom: 2px;">Relevant Coursework: OOP, Data Structures, API Design, Full-Stack Web Development</div>
+      </div>
+      <div>
+        <div class="edu-row">
+          <div class="edu-title">Class XII – Senior Secondary</div>
+          <div class="edu-date">2023 – 2024</div>
+        </div>
+        <div class="edu-sub">Government Co-Ed Vidyalaya, Kalkaji, Delhi</div>
+      </div>
+      <div>
+        <div class="edu-row">
+          <div class="edu-title">Class X – Secondary</div>
+          <div class="edu-date">2021 – 2022</div>
+        </div>
+        <div class="edu-sub">St. Mary's Public School, Delhi</div>
+      </div>
+    </section>
+
+    <!-- Connect With Me -->
+    <section>
+      <div class="section-title">CONNECT WITH ME</div>
+      <div class="connect-row">
+        <strong>GitHub:</strong> <a href="https://github.com/Aadityasingh08" target="_blank">https://github.com/Aadityasingh08</a>
+      </div>
+      <div class="connect-row">
+        <strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/aditya-singh-392b9934b/" target="_blank">https://www.linkedin.com/in/aditya-singh-392b9934b/</a>
+      </div>
+      <div class="connect-row">
+        <strong>Portfolio:</strong> <a href="https://pportfolio-ten.vercel.app" target="_blank">https://pportfolio-ten.vercel.app</a>
+      </div>
+    </section>
+
+  </div>
+
+</body>
+</html>
