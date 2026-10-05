@@ -27,6 +27,8 @@ app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 app.use(auditLogger);
 
+app.get('/', (req, res) => res.json({ message: "TRACE-X Cyber Intelligence API", status: "ok" }));
+app.get('/api', (req, res) => res.json({ message: "TRACE-X API Gateway", status: "ok" }));
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/auth', authRoutes);
