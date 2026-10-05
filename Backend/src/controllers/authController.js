@@ -11,7 +11,10 @@ export const register = async (req, res) => {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
-    const existing = await pool.query(`SELECT id FROM users WHERE email = $1`, [email]);
+    const trimmedName = name.trim();
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const existing = await pool.query(`SELECT id FROM users WHERE LOWER(email) = $1`, [normalizedEmail]);
     if (existing.rows.length > 0) {
       return res.status(409).json({ success: false, message: "Email already registered" });
     }
@@ -19,9 +22,9 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      `INSERT INTO users (name, email, password) VALUES ($1, $2, $3)
+      `INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, 'ANALYST')
        RETURNING id, name, email, role, created_at`,
-      [name, email, hashedPassword]
+      [trimmedName, normalizedEmail, hashedPassword]
     );
 
     const user = result.rows[0];
@@ -32,7 +35,7 @@ export const register = async (req, res) => {
 
     res.status(201).json({ success: true, token, user });
   } catch (error) {
-    console.error(error);
+    console.error("Register controller error:", error);
     res.status(500).json({ success: false, message: "Registration failed", error: error.message });
   }
 };

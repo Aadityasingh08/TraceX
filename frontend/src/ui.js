@@ -25,7 +25,10 @@ export function formatNumber(value) {
 }
 
 export function initials(name) {
-  return name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+  if (!name || typeof name !== "string") return "TX";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "TX";
+  return parts.map((part) => part[0] || "").join("").slice(0, 2).toUpperCase() || "TX";
 }
 
 export function sectionHeading(eyebrow, title, copy = "", action = "") {

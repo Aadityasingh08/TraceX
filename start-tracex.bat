@@ -16,7 +16,7 @@ REM 3. Start Frontend in new window
 echo [3/3] Starting Frontend UI (port 5173)...
 start "TRACE-X Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
 
-timeout /t 3 >nul
+timeout /t 4 >nul
 
 REM 4. Open Browser
 echo Opening TRACE-X in your browser...
